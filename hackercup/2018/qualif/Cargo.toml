@@ -1,0 +1,21 @@
+[package]
+name = "hackercup_2018"
+version = "0.1.0"
+authors = ["Rémi Dupré <r.dupre@qwant.com>"]
+edition = "2018"
+
+[[bin]]
+name = "a"
+path = "A.rs"
+
+[[bin]]
+name = "b"
+path = "B.rs"
+
+[[bin]]
+name = "c"
+path = "C.rs"
+
+[[bin]]
+name = "c_naive"
+path = "C_naive.rs"

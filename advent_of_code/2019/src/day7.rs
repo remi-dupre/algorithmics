@@ -31,56 +31,63 @@ pub fn part1(program: &[isize]) -> isize {
         .unwrap()
 }
 
+#[allow(unused_must_use)]
 #[aoc(day7, part2)]
 pub fn part2(program: &[isize]) -> isize {
     (5..10)
         .permutations(5)
         .filter_map(|phase| {
+            let first_buffer: RefCell<VecDeque<_>> = RefCell::new(vec![phase[0], 0].into());
+
             let computers: Vec<_> = (0..5)
                 .map(|_| {
                     Rc::new(RefCell::new(Computer::new(
                         program,
-                        Box::new(|| -> isize { todo!() }) as Box<dyn FnMut() -> isize>,
+                        Box::new(|| -> isize { unreachable!("will be replaced") })
+                            as Box<dyn FnMut() -> isize>,
                     )))
                 })
                 .collect();
 
-            // Input function : read from previous computer
+            // Input function for [0]: read from buffer
 
-            let inputs: Vec<Rc<RefCell<VecDeque<isize>>>> = phase
-                .into_iter()
-                .map(|phase| Rc::new(RefCell::new(vec![phase].into())))
-                .collect();
-
-            let read_input = inputs.iter().enumerate().map(|(i, input)| {
-                let input = input.clone();
-                let prev_computer = computers[(i + 4) % 5].clone();
-
+            computers[0].borrow_mut().replace_input({
+                let first_buffer = &first_buffer;
                 Box::new(move || {
-                    if let Some(val) = input.borrow_mut().pop_front() {
-                        val
-                    } else if i != 0 {
-                        prev_computer
-                            .borrow_mut()
-                            .next()
-                            .expect("no output from previous computer")
-                    } else {
-                        panic!("first computer has no input left")
-                    }
+                    first_buffer
+                        .borrow_mut()
+                        .pop_front()
+                        .expect("first computer reached end of input")
                 }) as _
             });
 
-            #[allow(unused_must_use)]
-            for (i, new_input) in read_input.enumerate() {
-                computers[i].borrow_mut().replace_input(new_input);
+            // Input function for [1..4]: read from previous computer
+
+            for (i, phase) in phase.iter().enumerate().skip(1) {
+                let mut initial = Some(*phase);
+                let prev_computer = computers[(i + 4) % 5].clone();
+
+                computers[i].borrow_mut().replace_input({
+                    Box::new(move || {
+                        if let Some(val) = initial.take() {
+                            val
+                        } else if i != 0 {
+                            prev_computer
+                                .borrow_mut()
+                                .next()
+                                .expect("no output from previous computer")
+                        } else {
+                            panic!("first computer has no input left")
+                        }
+                    }) as _
+                });
             }
 
             // Manually run the loop
-            inputs[0].borrow_mut().push_back(0);
 
-            iter::from_fn(move || {
+            iter::from_fn(|| {
                 let val = computers[4].borrow_mut().next();
-                inputs[0].borrow_mut().push_back(val?);
+                first_buffer.borrow_mut().push_back(val?);
                 val
             })
             .last()

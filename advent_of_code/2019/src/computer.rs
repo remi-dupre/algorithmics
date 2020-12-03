@@ -1,12 +1,15 @@
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryInto;
+use std::fmt::Debug;
 use std::iter;
 
 pub struct Computer<I>
 where
     I: FnMut() -> isize,
 {
-    program: Vec<isize>,
-    curr_ptr: Option<usize>,
+    memory: Vec<isize>,
+    run: bool,
+    ptr: usize,
+    rbase: usize,
     input: I,
 }
 
@@ -16,19 +19,70 @@ where
 {
     pub fn new<P: Into<Vec<isize>>>(program: P, input: I) -> Self {
         Self {
-            program: program.into(),
-            curr_ptr: Some(0),
+            memory: program.into(),
+            run: true,
+            ptr: 0,
+            rbase: 0,
             input,
         }
     }
 
-    pub fn run(mut self) -> Vec<isize> {
-        while self.next().is_some() {}
-        self.program
-    }
-
     pub fn replace_input(&mut self, new_input: I) -> I {
         std::mem::replace(&mut self.input, new_input)
+    }
+
+    pub fn run(mut self) -> Vec<isize> {
+        while self.next().is_some() {}
+        self.memory
+    }
+
+    fn apply<O>(&mut self, inst: Instruction, mut output: O)
+    where
+        O: FnMut(isize),
+    {
+        assert!(self.run);
+        let params = inst.params;
+
+        match inst.op {
+            Operation::Add => *params[2].get_mut(self) = params[0].get(self) + params[1].get(self),
+            Operation::Mul => *params[2].get_mut(self) = params[0].get(self) * params[1].get(self),
+            Operation::Input => {
+                let input = (self.input)();
+                *params[0].get_mut(self) = input;
+            }
+            Operation::Output => output(params[0].get(self)),
+            Operation::End => {
+                self.run = false;
+                return;
+            }
+            Operation::JumpIf(true) => {
+                if params[0].get(self) != 0 {
+                    self.ptr = params[1].get(self).try_into().expect("invalid jump");
+                    return;
+                }
+            }
+            Operation::JumpIf(false) => {
+                if params[0].get(self) == 0 {
+                    self.ptr = params[1].get(self).try_into().expect("invalid jump");
+                    return;
+                }
+            }
+            Operation::Less => {
+                *params[2].get_mut(self) = (params[0].get(self) < params[1].get(self)) as isize
+            }
+            Operation::Equals => {
+                *params[2].get_mut(self) = (params[0].get(self) == params[1].get(self)) as isize
+            }
+            Operation::AdjustRBase => {
+                self.rbase = {
+                    (self.rbase as isize + params[0].get(self))
+                        .try_into()
+                        .expect("negative rbase")
+                }
+            }
+        };
+
+        self.ptr += 1 + inst.op.nb_parameters();
     }
 }
 
@@ -41,12 +95,9 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         let mut output = None;
 
-        while output.is_none() && self.curr_ptr.is_some() {
-            let ptr = self.curr_ptr.unwrap();
-            let instruction = Instruction::parse(&self.program[ptr..]);
-            self.curr_ptr = instruction.apply(ptr, &mut self.program, &mut self.input, |val| {
-                output = Some(val)
-            })
+        while output.is_none() && self.run {
+            let instruction = Instruction::parse(&self.memory[self.ptr..]);
+            self.apply(instruction, |val| output = Some(val))
         }
 
         output
@@ -84,54 +135,6 @@ impl Instruction {
 
         Self { op, params }
     }
-
-    fn apply<I, O>(
-        &self,
-        ptr: usize,
-        memory: &mut [isize],
-        mut input: I,
-        mut output: O,
-    ) -> Option<usize>
-    where
-        I: FnMut() -> isize,
-        O: FnMut(isize),
-    {
-        let params: Vec<_> = self.params.iter().map(|param| param.get(memory)).collect();
-
-        let set_mem = |memory: &mut [isize], addr, val| {
-            memory[usize::try_from(addr).expect("out of memory")] = val
-        };
-
-        match self.op {
-            Operation::Add => set_mem(memory, self.params[2].val, params[0] + params[1]),
-            Operation::Mul => set_mem(memory, self.params[2].val, params[0] * params[1]),
-            Operation::Input => set_mem(memory, self.params[0].val, input()),
-            Operation::Output => output(params[0]),
-            Operation::End => return None,
-            Operation::JumpIf(true) => {
-                if params[0] != 0 {
-                    return Some(params[1].try_into().expect("invalid jump"));
-                }
-            }
-            Operation::JumpIf(false) => {
-                if params[0] == 0 {
-                    return Some(params[1].try_into().expect("invalid jump"));
-                }
-            }
-            Operation::Less => set_mem(
-                memory,
-                self.params[2].val,
-                if params[0] < params[1] { 1 } else { 0 },
-            ),
-            Operation::Equals => set_mem(
-                memory,
-                self.params[2].val,
-                if params[0] == params[1] { 1 } else { 0 },
-            ),
-        };
-
-        Some(1 + ptr + self.op.nb_parameters())
-    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -144,6 +147,7 @@ enum Operation {
     JumpIf(bool),
     Less,
     Equals,
+    AdjustRBase,
 }
 
 impl Operation {
@@ -157,6 +161,7 @@ impl Operation {
             6 => Self::JumpIf(false),
             7 => Self::Less,
             8 => Self::Equals,
+            9 => Self::AdjustRBase,
             99 => Self::End,
             _ => panic!("invalid opcode `{}`", opcode),
         }
@@ -165,7 +170,7 @@ impl Operation {
     fn nb_parameters(self) -> usize {
         match self {
             Self::End => 0,
-            Self::Input | Self::Output => 1,
+            Self::Input | Self::Output | Self::AdjustRBase => 1,
             Self::JumpIf(_) => 2,
             Self::Add | Self::Mul | Self::Less | Self::Equals => 3,
         }
@@ -182,6 +187,7 @@ struct Parameter {
 enum Mode {
     Position,
     Immediate,
+    Relative,
 }
 
 impl Mode {
@@ -189,18 +195,49 @@ impl Mode {
         match mode {
             0 => Self::Position,
             1 => Self::Immediate,
+            2 => Self::Relative,
             _ => panic!("invalid mode `{}`", mode),
         }
     }
 }
 
 impl Parameter {
-    fn get(self, memory: &mut [isize]) -> isize {
+    fn get<I: FnMut() -> isize>(self, computer: &Computer<I>) -> isize {
         match self.mode {
-            Mode::Position => *memory
-                .get(usize::try_from(self.val).expect("invalid pointer"))
-                .expect("out of memory"),
+            Mode::Position => {
+                let ptr: usize = self.val.try_into().expect("invalid negative pointer");
+                computer.memory.get(ptr).copied().unwrap_or(0)
+            }
             Mode::Immediate => self.val,
+            Mode::Relative => {
+                let as_pos = Self {
+                    mode: Mode::Position,
+                    val: computer.rbase as isize + self.val,
+                };
+                as_pos.get(computer)
+            }
+        }
+    }
+
+    fn get_mut<I: FnMut() -> isize>(self, computer: &mut Computer<I>) -> &mut isize {
+        match self.mode {
+            Mode::Position => {
+                let ptr: usize = self.val.try_into().expect("invalid negative pointer");
+
+                if ptr >= computer.memory.len() {
+                    computer.memory.resize(ptr + 1, 0);
+                }
+
+                computer.memory.get_mut(ptr).unwrap()
+            }
+            Mode::Immediate => panic!("can't mutate in immediate mode"),
+            Mode::Relative => {
+                let as_pos = Self {
+                    mode: Mode::Position,
+                    val: computer.rbase as isize + self.val,
+                };
+                as_pos.get_mut(computer)
+            }
         }
     }
 }

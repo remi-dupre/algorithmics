@@ -1,11 +1,8 @@
 use std::collections::HashSet;
 
-use aoc_runner_derive::{aoc, aoc_generator};
-
 const TARGET: u32 = 2020;
 
-#[aoc_generator(day1)]
-pub fn input_generator(input: &str) -> Vec<u32> {
+pub fn generator(input: &str) -> Vec<u32> {
     input
         .lines()
         .map(|line| {
@@ -15,8 +12,7 @@ pub fn input_generator(input: &str) -> Vec<u32> {
         .collect()
 }
 
-#[aoc(day1, part1, array)]
-pub fn part1_array(input: &[u32]) -> u32 {
+pub fn part_1_array(input: &[u32]) -> u32 {
     let mut numbers = input.to_vec();
     numbers.sort_unstable();
 
@@ -29,8 +25,7 @@ pub fn part1_array(input: &[u32]) -> u32 {
     unreachable!("no feasible solution")
 }
 
-#[aoc(day1, part1, hashset)]
-pub fn part1_hashset(input: &[u32]) -> u32 {
+pub fn part_1_hashset(input: &[u32]) -> u32 {
     let numbers: HashSet<_> = input.iter().copied().collect();
 
     for &num in input {
@@ -42,8 +37,7 @@ pub fn part1_hashset(input: &[u32]) -> u32 {
     unreachable!("no feasible solution")
 }
 
-#[aoc(day1, part2)]
-pub fn part2(input: &[u32]) -> u32 {
+pub fn part_2(input: &[u32]) -> u32 {
     let mut numbers = input.to_vec();
     numbers.sort_unstable();
 

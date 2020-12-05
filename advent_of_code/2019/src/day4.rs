@@ -1,8 +1,6 @@
-use aoc_runner_derive::{aoc, aoc_generator};
 use std::iter;
 
-#[aoc_generator(day4)]
-pub fn input_generator(input: &str) -> (u64, u64) {
+pub fn generator(input: &str) -> (u64, u64) {
     let mut passwords = input.split('-');
     (
         passwords.next().unwrap().parse().unwrap(),
@@ -36,42 +34,22 @@ fn groups<T: Eq>(mut vals: impl Iterator<Item = T>) -> impl Iterator<Item = usiz
     })
 }
 
-#[aoc(day4, part1)]
-pub fn part1(input: &(u64, u64)) -> usize {
+pub fn part_1(input: &(u64, u64)) -> usize {
     (input.0..=input.1)
         .filter(|candidate| {
             let as_str = candidate.to_string();
-
-            let is_sorted = as_str.as_bytes().windows(2).all(|pair| {
-                if let [x, y] = pair {
-                    x <= y
-                } else {
-                    unreachable!()
-                }
-            });
-
             let has_pair = groups(as_str.bytes()).any(|group_size| group_size >= 2);
-            is_sorted && has_pair
+            as_str.as_bytes().is_sorted() && has_pair
         })
         .count()
 }
 
-#[aoc(day4, part2)]
-pub fn part2(input: &(u64, u64)) -> usize {
+pub fn part_2(input: &(u64, u64)) -> usize {
     (input.0..=input.1)
         .filter(|candidate| {
             let as_str = candidate.to_string();
-
-            let is_sorted = as_str.as_bytes().windows(2).all(|pair| {
-                if let [x, y] = pair {
-                    x <= y
-                } else {
-                    unreachable!()
-                }
-            });
-
             let has_pair = groups(as_str.bytes()).any(|group_size| group_size == 2);
-            is_sorted && has_pair
+            as_str.bytes().is_sorted() && has_pair
         })
         .count()
 }

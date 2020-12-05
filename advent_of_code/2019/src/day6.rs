@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
-use aoc_runner_derive::{aoc, aoc_generator};
-
-#[aoc_generator(day6)]
-pub fn input_generator(input: &str) -> HashMap<String, Vec<String>> {
+pub fn generator(input: &str) -> HashMap<String, Vec<String>> {
     let edges = input.lines().flat_map(|line| {
         let mut splited = line.splitn(2, ')');
         let x = splited.next().unwrap();
@@ -23,8 +20,7 @@ pub fn input_generator(input: &str) -> HashMap<String, Vec<String>> {
     graph
 }
 
-#[aoc(day6, part1)]
-pub fn part1(graph: &HashMap<String, Vec<String>>) -> u64 {
+pub fn part_1(graph: &HashMap<String, Vec<String>>) -> u64 {
     fn count_links(
         node: &str,
         prev: Option<&str>,
@@ -43,8 +39,7 @@ pub fn part1(graph: &HashMap<String, Vec<String>>) -> u64 {
     count_links("COM", None, 0, graph)
 }
 
-#[aoc(day6, part2)]
-pub fn part2(graph: &HashMap<String, Vec<String>>) -> usize {
+pub fn part_2(graph: &HashMap<String, Vec<String>>) -> usize {
     fn find(
         node: &str,
         target: &str,

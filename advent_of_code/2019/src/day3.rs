@@ -3,10 +3,7 @@ use std::error::Error;
 use std::iter;
 use std::str::FromStr;
 
-use aoc_runner_derive::{aoc, aoc_generator};
-
-#[aoc_generator(day3)]
-pub fn input_generator(input: &str) -> (Vec<Section>, Vec<Section>) {
+pub fn generator(input: &str) -> (Vec<Section>, Vec<Section>) {
     let mut wires = input.lines().map(|line| {
         line.split(',')
             .map(|sec| sec.parse().expect("invalid section"))
@@ -25,8 +22,7 @@ fn path(wire: &[Section]) -> impl Iterator<Item = (i64, i64)> + '_ {
         })
 }
 
-#[aoc(day3, part1, hashset)]
-pub fn part1_hashset(input: &(Vec<Section>, Vec<Section>)) -> u64 {
+pub fn part_1_hashset(input: &(Vec<Section>, Vec<Section>)) -> u64 {
     let path1: HashSet<_> = path(&input.0).collect();
     let path2: HashSet<_> = path(&input.1).collect();
 
@@ -37,8 +33,7 @@ pub fn part1_hashset(input: &(Vec<Section>, Vec<Section>)) -> u64 {
         .expect("no intersection")
 }
 
-#[aoc(day3, part1, slice)]
-pub fn part1_slice(input: &(Vec<Section>, Vec<Section>)) -> u64 {
+pub fn part_1_slice(input: &(Vec<Section>, Vec<Section>)) -> u64 {
     let mut path1: Vec<_> = path(&input.0).collect();
     let mut path2: Vec<_> = path(&input.1).collect();
 
@@ -61,8 +56,7 @@ pub fn part1_slice(input: &(Vec<Section>, Vec<Section>)) -> u64 {
     abs(path1.pop().unwrap())
 }
 
-#[aoc(day3, part2)]
-pub fn part2(input: &(Vec<Section>, Vec<Section>)) -> u64 {
+pub fn part_2(input: &(Vec<Section>, Vec<Section>)) -> u64 {
     let path1: HashSet<_> = path(&input.0).collect();
     let path2: HashSet<_> = path(&input.1).collect();
 

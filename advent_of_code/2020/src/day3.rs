@@ -1,7 +1,4 @@
-use aoc_runner_derive::{aoc, aoc_generator};
-
-#[aoc_generator(day3)]
-pub fn input_generator(input: &str) -> Grid {
+pub fn generator(input: &str) -> Grid {
     let width = input.lines().next().map(str::len).unwrap_or(0);
     let data = input.lines().flat_map(|line| {
         line.chars().map(|c| match c {
@@ -20,13 +17,11 @@ fn count_trees(grid: &Grid, cells: impl IntoIterator<Item = (usize, usize)>) -> 
         .count()
 }
 
-#[aoc(day3, part1)]
-pub fn part1(grid: &Grid) -> usize {
+pub fn part_1(grid: &Grid) -> usize {
     count_trees(grid, grid.slope(3, 1))
 }
 
-#[aoc(day3, part2)]
-pub fn part2(grid: &Grid) -> usize {
+pub fn part_2(grid: &Grid) -> usize {
     [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
         .iter()
         .map(|&(x, y)| count_trees(grid, grid.slope(x, y)))

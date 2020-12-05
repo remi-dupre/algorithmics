@@ -3,20 +3,12 @@ use std::collections::VecDeque;
 use std::iter;
 use std::rc::Rc;
 
-use aoc_runner_derive::{aoc, aoc_generator};
 use itertools::Itertools;
 
 use crate::computer::Computer;
-use crate::day2;
+pub use crate::day2::generator;
 
-#[aoc_generator(day7)]
-pub fn input_generator(input: &str) -> Vec<isize> {
-    day2::input_generator(input)
-}
-
-#[allow(clippy::many_single_char_names, clippy::clippy::match_ref_pats)]
-#[aoc(day7, part1)]
-pub fn part1(program: &[isize]) -> isize {
+pub fn part_1(program: &[isize]) -> isize {
     fn run_circuit(program: &[isize], phase: &[isize], init: isize) -> Option<isize> {
         phase.iter().fold(Some(init), |snd, &fst| {
             let mut input = vec![fst, snd.expect("no input for next amplifier")].into_iter();
@@ -32,8 +24,7 @@ pub fn part1(program: &[isize]) -> isize {
 }
 
 #[allow(unused_must_use)]
-#[aoc(day7, part2)]
-pub fn part2(program: &[isize]) -> isize {
+pub fn part_2(program: &[isize]) -> isize {
     (5..10)
         .permutations(5)
         .filter_map(|phase| {

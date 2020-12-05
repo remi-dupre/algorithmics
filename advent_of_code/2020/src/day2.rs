@@ -1,10 +1,7 @@
 use std::error::Error;
 use std::str::FromStr;
 
-use aoc_runner_derive::{aoc, aoc_generator};
-
-#[aoc_generator(day2)]
-pub fn input_generator(input: &str) -> Vec<(Policy, String)> {
+pub fn generator(input: &str) -> Vec<(Policy, &str)> {
     input
         .lines()
         .map(|line| {
@@ -15,14 +12,13 @@ pub fn input_generator(input: &str) -> Vec<(Policy, String)> {
                     .expect("missing policy")
                     .parse()
                     .unwrap_or_else(|err| panic!("invalid policy for `{}`: `{}`", line, err)),
-                parts.next().expect("missing password").to_string(),
+                parts.next().expect("missing password"),
             )
         })
         .collect()
 }
 
-#[aoc(day2, part1)]
-pub fn part1(input: &[(Policy, String)]) -> usize {
+pub fn part_1(input: &[(Policy, &str)]) -> usize {
     input
         .iter()
         .filter(|(policy, password)| {
@@ -32,8 +28,7 @@ pub fn part1(input: &[(Policy, String)]) -> usize {
         .count()
 }
 
-#[aoc(day2, part2)]
-pub fn part2(input: &[(Policy, String)]) -> usize {
+pub fn part_2(input: &[(Policy, &str)]) -> usize {
     input
         .iter()
         .filter(|(policy, password)| {

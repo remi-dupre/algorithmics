@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 aoc = { git = "https://github.com/remi-dupre/aoc.git", branch = "main" }
 bytecount = "0.6.2"
+fixedbitset = "0.3.1"

@@ -16,6 +16,7 @@ version = "0.1.0"
 dependencies = [
  "aoc",
  "bytecount",
+ "fixedbitset",
 ]
 
 [[package]]
@@ -137,6 +138,12 @@ name = "core-foundation-sys"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea221b5284a47e40033bf9b66f35f984ec0ea2931eb03505246cd27a963f981b"
+
+[[package]]
+name = "fixedbitset"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e08c8bc7575d7e091fe0706963bd22e2a4be6a64da995f03b2a5a57d66ad015"
 
 [[package]]
 name = "fnv"

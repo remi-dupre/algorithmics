@@ -8,3 +8,4 @@ edition = "2018"
 aoc = { git = "https://github.com/remi-dupre/aoc.git", branch = "main" }
 bytecount = "0.6.2"
 fixedbitset = "0.3.1"
+regex = "1"

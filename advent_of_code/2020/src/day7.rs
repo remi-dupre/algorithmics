@@ -1,11 +1,11 @@
 use std::collections::{HashMap, HashSet};
+use std::error::Error;
 
 use regex::Regex;
 
 type Graph<'i> = HashMap<&'i str, Vec<(&'i str, usize)>>;
 
-#[allow(clippy::clippy::match_ref_pats)]
-pub fn generator(input: &str) -> Graph<'_> {
+pub fn generator(input: &str) -> Result<Graph, Box<dyn Error>> {
     let re = Regex::new(r"(?P<count>\d+) (?P<color>.+?) bags?").unwrap();
 
     let edges = input.lines().flat_map(|mut line| {
@@ -13,13 +13,16 @@ pub fn generator(input: &str) -> Graph<'_> {
             line = &line[..line.len() - 1];
         }
 
-        match line.split(" bags contain ").collect::<Vec<_>>().as_slice() {
-            &[source, targets] => re.captures_iter(targets).map(move |caps| {
-                (
+        match *line.split(" bags contain ").collect::<Vec<_>>().as_slice() {
+            [source, targets] => re.captures_iter(targets).map(move |caps| {
+                Ok::<_, Box<dyn Error>>((
                     source,
-                    caps.name("color").unwrap().as_str(),
-                    caps.name("count").unwrap().as_str().parse().unwrap(),
-                )
+                    caps.name("color").ok_or("missing color")?.as_str(),
+                    caps.name("count")
+                        .ok_or("missing count")?
+                        .as_str()
+                        .parse()?,
+                ))
             }),
             _ => panic!("invalid constraint format"),
         }
@@ -27,14 +30,15 @@ pub fn generator(input: &str) -> Graph<'_> {
 
     let mut graph = HashMap::new();
 
-    for (source, target, weight) in edges {
+    for edge in edges {
+        let (source, target, weight) = edge?;
         graph
             .entry(source)
             .or_insert_with(Vec::new)
             .push((target, weight))
     }
 
-    graph
+    Ok(graph)
 }
 
 fn reverse<'i>(graph: &Graph<'i>) -> Graph<'i> {
@@ -57,18 +61,18 @@ fn reverse<'i>(graph: &Graph<'i>) -> Graph<'i> {
 pub fn part_1(graph: &Graph) -> usize {
     fn run<'i>(graph: &Graph<'i>, node: &'i str, seen: &mut HashSet<&'i str>) -> usize {
         if seen.contains(node) {
-            0
-        } else {
-            seen.insert(node);
+            return 0;
+        }
 
-            if let Some(children) = graph.get(node) {
-                1 + children
-                    .iter()
-                    .map(|&(child, _)| run(graph, child, seen))
-                    .sum::<usize>()
-            } else {
-                1
-            }
+        seen.insert(node);
+
+        if let Some(children) = graph.get(node) {
+            1 + children
+                .iter()
+                .map(|&(child, _)| run(graph, child, seen))
+                .sum::<usize>()
+        } else {
+            1
         }
     }
 
@@ -88,4 +92,45 @@ pub fn part_2(graph: &Graph) -> usize {
     }
 
     run(&graph, "shiny gold") - 1
+}
+
+// ---
+// --- Tests
+// ---
+
+#[cfg(test)]
+mod tests {
+    use crate::day7::*;
+
+    const EXAMPLE_1: &str = crate::lines! {
+        "light red bags contain 1 bright white bag, 2 muted yellow bags."
+        "dark orange bags contain 3 bright white bags, 4 muted yellow bags."
+        "bright white bags contain 1 shiny gold bag."
+        "muted yellow bags contain 2 shiny gold bags, 9 faded blue bags."
+        "shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags."
+        "dark olive bags contain 3 faded blue bags, 4 dotted black bags."
+        "vibrant plum bags contain 5 faded blue bags, 6 dotted black bags."
+        "faded blue bags contain no other bags."
+        "dotted black bags contain no other bags."
+    };
+
+    const EXAMPLE_2: &str = crate::lines! {
+        "shiny gold bags contain 2 dark red bags."
+        "dark red bags contain 2 dark orange bags."
+        "dark orange bags contain 2 dark yellow bags."
+        "dark yellow bags contain 2 dark green bags."
+        "dark green bags contain 2 dark blue bags."
+        "dark blue bags contain 2 dark violet bags."
+        "dark violet bags contain no other bags."
+    };
+
+    #[test]
+    fn test_part_1() {
+        assert_eq!(4, part_1(&generator(EXAMPLE_1).unwrap()));
+    }
+
+    #[test]
+    fn test_part_2() {
+        assert_eq!(126, part_2(&generator(EXAMPLE_2).unwrap()));
+    }
 }

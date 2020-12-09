@@ -1,19 +1,15 @@
 use std::error::Error;
 use std::str::FromStr;
 
-pub fn generator(input: &str) -> Vec<(Policy, &str)> {
+pub fn generator(input: &str) -> Result<Vec<(Policy, &str)>, Box<dyn Error>> {
     input
         .lines()
         .map(|line| {
             let mut parts = line.splitn(2, ": ");
-            (
-                parts
-                    .next()
-                    .expect("missing policy")
-                    .parse()
-                    .unwrap_or_else(|err| panic!("invalid policy for `{}`: `{}`", line, err)),
-                parts.next().expect("missing password"),
-            )
+            Ok((
+                parts.next().ok_or("missing policy")?.parse()?,
+                parts.next().ok_or("missing password")?,
+            ))
         })
         .collect()
 }
@@ -68,5 +64,30 @@ impl FromStr for Policy {
             }
             _ => Err("policy should contain exactly one space".into()),
         }
+    }
+}
+
+// ---
+// --- Tests
+// ---
+
+#[cfg(test)]
+mod tests {
+    use crate::day2::*;
+
+    const EXAMPLE: &str = crate::lines! {
+        "1-3 a: abcde"
+        "1-3 b: cdefg"
+        "2-9 c: ccccccccc"
+    };
+
+    #[test]
+    fn test_part_1() {
+        assert_eq!(2, part_1(&generator(EXAMPLE).unwrap()));
+    }
+
+    #[test]
+    fn test_part_2() {
+        assert_eq!(1, part_2(&generator(EXAMPLE).unwrap()));
     }
 }

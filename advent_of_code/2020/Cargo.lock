@@ -12,7 +12,7 @@ dependencies = [
 [[package]]
 name = "aoc"
 version = "0.1.0"
-source = "git+https://github.com/remi-dupre/aoc.git?branch=main#9ae97bff01d413f0795dc05cd69f791ca8c014bb"
+source = "git+https://github.com/remi-dupre/aoc?branch=new-parser#165912fd0bae62035fb21181d161f66d6d475082"
 dependencies = [
  "attohttpc",
  "clap 3.0.0-beta.2",

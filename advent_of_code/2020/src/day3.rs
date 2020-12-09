@@ -1,13 +1,16 @@
-pub fn generator(input: &str) -> Grid {
+pub fn generator(input: &str) -> Result<Grid, String> {
     let width = input.lines().next().map(str::len).unwrap_or(0);
-    let data = input.lines().flat_map(|line| {
-        line.chars().map(|c| match c {
-            '.' => Cell::Empty,
-            '#' => Cell::Tree,
-            _ => panic!("invalid cell `{}`", c),
+    let data: Result<_, _> = input
+        .lines()
+        .flat_map(|line| {
+            line.chars().map(|c| match c {
+                '.' => Ok(Cell::Empty),
+                '#' => Ok(Cell::Tree),
+                _ => Err(format!("invalid cell `{}`", c)),
+            })
         })
-    });
-    Grid::new(width, data)
+        .collect();
+    Ok(Grid::new(width, data?))
 }
 
 fn count_trees(grid: &Grid, cells: impl IntoIterator<Item = (usize, usize)>) -> usize {
@@ -45,8 +48,7 @@ pub struct Grid {
 }
 
 impl Grid {
-    fn new(width: usize, data: impl IntoIterator<Item = Cell>) -> Self {
-        let data: Vec<_> = data.into_iter().collect();
+    fn new(width: usize, data: Vec<Cell>) -> Self {
         let height = data.len() / width;
         assert_eq!(width * height, data.len(), "bad shape for Grid");
 
@@ -64,5 +66,38 @@ impl Grid {
 
     fn slope(&self, dx: usize, dy: usize) -> impl Iterator<Item = (usize, usize)> {
         (0..self.height / dy).map(move |it| (it * dx, it * dy))
+    }
+}
+
+// ---
+// --- Tests
+// ---
+
+#[cfg(test)]
+mod tests {
+    use crate::day3::*;
+
+    const EXAMPLE: &str = crate::lines! {
+        "..##.........##.........##.........##.........##.........##......."
+        "#...#...#..#...#...#..#...#...#..#...#...#..#...#...#..#...#...#.."
+        ".#....#..#..#....#..#..#....#..#..#....#..#..#....#..#..#....#..#."
+        "..#.#...#.#..#.#...#.#..#.#...#.#..#.#...#.#..#.#...#.#..#.#...#.#"
+        ".#...##..#..#...##..#..#...##..#..#...##..#..#...##..#..#...##..#."
+        "..#.##.......#.##.......#.##.......#.##.......#.##.......#.##....."
+        ".#.#.#....#.#.#.#....#.#.#.#....#.#.#.#....#.#.#.#....#.#.#.#....#"
+        ".#........#.#........#.#........#.#........#.#........#.#........#"
+        "#.##...#...#.##...#...#.##...#...#.##...#...#.##...#...#.##...#..."
+        "#...##....##...##....##...##....##...##....##...##....##...##....#"
+        ".#..#...#.#.#..#...#.#.#..#...#.#.#..#...#.#.#..#...#.#.#..#...#.#"
+    };
+
+    #[test]
+    fn test_part_1() {
+        assert_eq!(7, part_1(&generator(EXAMPLE).unwrap()));
+    }
+
+    #[test]
+    fn test_part_2() {
+        assert_eq!(336, part_2(&generator(EXAMPLE).unwrap()));
     }
 }

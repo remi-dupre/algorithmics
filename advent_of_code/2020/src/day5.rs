@@ -12,21 +12,21 @@ pub enum Partition {
     Right,
 }
 
-pub fn generator(input: &str) -> Vec<[Partition; 10]> {
+pub fn generator(input: &str) -> Result<Vec<[Partition; 10]>, String> {
     input
         .lines()
         .map(|line| {
             line.chars()
                 .map(|c| match c {
-                    'F' => Partition::Front,
-                    'B' => Partition::Back,
-                    'L' => Partition::Left,
-                    'R' => Partition::Right,
-                    _ => panic!("invalid character `{}`", c),
+                    'F' => Ok(Partition::Front),
+                    'B' => Ok(Partition::Back),
+                    'L' => Ok(Partition::Left),
+                    'R' => Ok(Partition::Right),
+                    _ => Err(format!("invalid character `{}`", c)),
                 })
-                .collect::<Vec<_>>()
+                .collect::<Result<Vec<_>, _>>()?
                 .try_into()
-                .expect("seat assignment must be 10 character long")
+                .map_err(|_| "seat assignment must be 10 character long".to_string())
         })
         .collect()
 }
@@ -49,11 +49,11 @@ fn seat_id(seat: &[Partition; 10]) -> u16 {
     row.start * 8 + col.start
 }
 
-pub fn part_1(seats: &[[Partition; 10]]) -> u16 {
-    seats.iter().map(seat_id).max().expect("empty input")
+pub fn part_1(seats: &[[Partition; 10]]) -> Option<u16> {
+    seats.iter().map(seat_id).max()
 }
 
-pub fn part_2(seats: &[[Partition; 10]]) -> u16 {
+pub fn part_2(seats: &[[Partition; 10]]) -> Option<u16> {
     let mut is_taken = [false; MAX_ID as usize];
 
     for id in seats.iter().map(seat_id) {
@@ -66,5 +66,21 @@ pub fn part_2(seats: &[[Partition; 10]]) -> u16 {
         .filter(|(_, &[left, seat, right])| left && !seat && right)
         .map(|(i, _)| (i + 1).try_into().expect("invalid seat id"))
         .next()
-        .expect("no feasible seat")
+}
+
+// ---
+// --- Tests
+// ---
+
+#[cfg(test)]
+mod tests {
+    use crate::day5::*;
+
+    #[test]
+    fn test_part_1() {
+        assert_eq!(Some(357), part_1(&generator("FBFBBFFRLR").unwrap()));
+        assert_eq!(Some(567), part_1(&generator("BFFFBBFRRR").unwrap()));
+        assert_eq!(Some(119), part_1(&generator("FFFBBBFRRR").unwrap()));
+        assert_eq!(Some(820), part_1(&generator("BBFFBBFRLL").unwrap()));
+    }
 }

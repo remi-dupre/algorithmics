@@ -5,7 +5,7 @@ authors = ["Rémi Dupré <r.dupre@qwant.com>"]
 edition = "2018"
 
 [dependencies]
-aoc = { git = "https://github.com/remi-dupre/aoc.git", branch = "main" }
+aoc = { git = "https://github.com/remi-dupre/aoc", branch = "new-parser" }
 bytecount = "0.6.2"
 fixedbitset = "0.3.1"
 regex = "1"

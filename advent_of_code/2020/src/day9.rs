@@ -14,9 +14,8 @@ pub fn find_pairs(x: u64, slice: &[u64]) -> impl Iterator<Item = (u64, u64)> + '
 
 pub fn part_1(nums: &[u64]) -> Option<u64> {
     nums.array_windows::<26>()
-        .filter(|[prev @ .., x]| find_pairs(*x, prev).next().is_none())
+        .find(|[prev @ .., x]| find_pairs(*x, prev).next().is_none())
         .map(|[.., x]| *x)
-        .next()
 }
 
 pub fn part_2(nums: &[u64]) -> Option<u64> {

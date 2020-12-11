@@ -1,6 +1,14 @@
-pub fn generator(input: &str) -> Result<Grid, String> {
+use crate::utils::Matrix;
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub enum Cell {
+    Empty,
+    Tree,
+}
+
+pub fn generator(input: &str) -> Result<Matrix<Cell>, String> {
     let width = input.lines().next().map(str::len).unwrap_or(0);
-    let data: Result<_, _> = input
+    let data: Result<Vec<_>, _> = input
         .lines()
         .flat_map(|line| {
             line.chars().map(|c| match c {
@@ -10,63 +18,32 @@ pub fn generator(input: &str) -> Result<Grid, String> {
             })
         })
         .collect();
-    Ok(Grid::new(width, data?))
+    Ok(Matrix::new(data?, width))
 }
 
-fn count_trees(grid: &Grid, cells: impl IntoIterator<Item = (usize, usize)>) -> usize {
+fn slope(
+    grid: &Matrix<Cell>,
+    (dx, dy): (usize, usize),
+) -> impl Iterator<Item = (usize, usize)> + '_ {
+    (0..grid.height() / dy).map(move |it| ((it * dx) % grid.width(), it * dy))
+}
+
+fn count_trees(grid: &Matrix<Cell>, cells: impl IntoIterator<Item = (usize, usize)>) -> usize {
     cells
         .into_iter()
-        .filter(|&(x, y)| grid.get(x, y).expect("invalid position") == Cell::Tree)
+        .filter(|&(x, y)| grid[(x, y)] == Cell::Tree)
         .count()
 }
 
-pub fn part_1(grid: &Grid) -> usize {
-    count_trees(grid, grid.slope(3, 1))
+pub fn part_1(grid: &Matrix<Cell>) -> usize {
+    count_trees(grid, slope(grid, (3, 1)))
 }
 
-pub fn part_2(grid: &Grid) -> usize {
+pub fn part_2(grid: &Matrix<Cell>) -> usize {
     [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
         .iter()
-        .map(|&(x, y)| count_trees(grid, grid.slope(x, y)))
+        .map(|&(x, y)| count_trees(grid, slope(grid, (x, y))))
         .product()
-}
-
-// ---
-// --- Structs
-// ---
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-enum Cell {
-    Empty,
-    Tree,
-}
-
-pub struct Grid {
-    data: Vec<Cell>,
-    width: usize,
-    height: usize,
-}
-
-impl Grid {
-    fn new(width: usize, data: Vec<Cell>) -> Self {
-        let height = data.len() / width;
-        assert_eq!(width * height, data.len(), "bad shape for Grid");
-
-        Self {
-            data,
-            width,
-            height,
-        }
-    }
-
-    fn get(&self, x: usize, y: usize) -> Option<Cell> {
-        let x = x % self.width;
-        self.data.get(x + y * self.width).copied()
-    }
-
-    fn slope(&self, dx: usize, dy: usize) -> impl Iterator<Item = (usize, usize)> {
-        (0..self.height / dy).map(move |it| (it * dx, it * dy))
-    }
 }
 
 // ---

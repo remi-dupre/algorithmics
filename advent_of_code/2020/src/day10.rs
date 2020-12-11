@@ -25,7 +25,6 @@ pub fn part_2(adapters: &[u16]) -> u64 {
     let mut adapters = get_all_nodes(adapters);
     adapters.reverse();
     adapters.pop();
-
     let mut prev = [0, 0, 1];
 
     for i in 1..=*adapters.first().unwrap() {

@@ -1,4 +1,4 @@
-use std::convert::{TryFrom, TryInto};
+use crate::utils::SignedAdd;
 use std::error::Error;
 
 pub fn generator(input: &str) -> Result<Vec<Instruction>, Box<dyn Error>> {
@@ -64,9 +64,7 @@ pub fn part_2_naive(program: &[Instruction]) -> Option<isize> {
 pub fn part_2(program: &[Instruction]) -> isize {
     fn apply_offset(ptr: usize, instruction: Instruction) -> usize {
         match instruction {
-            Instruction::Jmp(x) => (isize::try_from(ptr).expect("ptr is too large") + x)
-                .try_into()
-                .expect("negative ptr"),
+            Instruction::Jmp(x) => ptr.signed_add(x).expect("bad ptr value"),
             _ => ptr + 1,
         }
     }
@@ -160,9 +158,7 @@ impl<'p> Computer<'p> {
             Instruction::Nop(_) => {}
             Instruction::Acc(x) => self.acc += x,
             Instruction::Jmp(x) => {
-                self.ptr = (isize::try_from(self.ptr).expect("ptr is too large") + x)
-                    .try_into()
-                    .expect("negative ptr");
+                self.ptr = self.ptr.signed_add(x).expect("bad ptr value");
                 return;
             }
         }

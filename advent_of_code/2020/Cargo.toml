@@ -5,7 +5,7 @@ authors = ["Rémi Dupré <r.dupre@qwant.com>"]
 edition = "2018"
 
 [dependencies]
-aoc-main = "*"
+aoc-main = { version = "*", features = ["bench"] }
 bytecount = "0.6.2"
 fixedbitset = "0.3.1"
 regex = "1"

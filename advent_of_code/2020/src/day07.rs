@@ -100,7 +100,7 @@ pub fn part_2(graph: &Graph) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use crate::day7::*;
+    use crate::day07::*;
 
     const EXAMPLE_1: &str = crate::lines! {
         "light red bags contain 1 bright white bag, 2 muted yellow bags."

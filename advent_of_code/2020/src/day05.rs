@@ -74,7 +74,7 @@ pub fn part_2(seats: &[[Partition; 10]]) -> Option<u16> {
 
 #[cfg(test)]
 mod tests {
-    use crate::day5::*;
+    use crate::day05::*;
 
     #[test]
     fn test_part_1() {

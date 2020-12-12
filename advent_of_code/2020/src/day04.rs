@@ -78,7 +78,7 @@ pub fn part_2(passwords: &[HashMap<&str, &str>]) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use crate::day4::*;
+    use crate::day04::*;
 
     const EXAMPLE_1: &str = crate::lines! {
         "ecl:gry pid:860033327 eyr:2020 hcl:#fffffd"

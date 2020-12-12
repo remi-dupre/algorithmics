@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::fmt;
 
 use crate::utils::{Matrix, SignedAdd};
@@ -14,19 +15,7 @@ const DIRECTIONS: [(isize, isize); 8] = [
 ];
 
 pub fn generator(input: &str) -> Result<Matrix<Cell>, String> {
-    let width = input.lines().next().map(str::len).unwrap_or(0);
-    let cells = input
-        .lines()
-        .flat_map(|line| {
-            line.chars().map(|c| match c {
-                '.' => Ok(Cell::Empty),
-                'L' => Ok(Cell::Seat),
-                '#' => Ok(Cell::Occupied),
-                _ => Err(format!("unknown cell `{}`", c)),
-            })
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    Ok(Matrix::new(cells, width))
+    input.parse()
 }
 
 fn apply_until_stable(
@@ -131,6 +120,19 @@ impl fmt::Debug for Cell {
                 Self::Empty => '.',
             }
         )
+    }
+}
+
+impl TryFrom<char> for Cell {
+    type Error = String;
+
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        match value {
+            '.' => Ok(Self::Empty),
+            'L' => Ok(Self::Seat),
+            '#' => Ok(Self::Occupied),
+            _ => Err(format!("unknown cell `{}`", value)),
+        }
     }
 }
 

@@ -53,7 +53,7 @@ pub fn part_2(input: &[u32]) -> Option<u32> {
 
 #[cfg(test)]
 mod tests {
-    use crate::day1::*;
+    use crate::day01::*;
 
     const EXAMPLE: &str = crate::lines! {
         "1721"

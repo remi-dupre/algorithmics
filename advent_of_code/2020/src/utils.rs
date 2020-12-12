@@ -1,6 +1,7 @@
-use std::convert::TryInto;
+use std::convert::{TryFrom, TryInto};
 use std::fmt;
-use std::ops::{Index, IndexMut};
+use std::ops::{Add, Index, IndexMut, Mul};
+use std::str::FromStr;
 
 #[macro_export]
 macro_rules! lines {
@@ -103,6 +104,25 @@ impl<T> IndexMut<(usize, usize)> for Matrix<T> {
     }
 }
 
+impl<T: TryFrom<char>> FromStr for Matrix<T> {
+    type Err = <T as TryFrom<char>>::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let width = s
+            .lines()
+            .next()
+            .map(|line| line.chars().count())
+            .unwrap_or(0);
+
+        let cells = s
+            .lines()
+            .flat_map(|line| line.chars().map(char::try_into))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(Matrix::new(cells, width))
+    }
+}
+
 impl<T: fmt::Debug> fmt::Debug for Matrix<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for y in 0..self.height() {
@@ -116,3 +136,47 @@ impl<T: fmt::Debug> fmt::Debug for Matrix<T> {
         Ok(())
     }
 }
+
+// Point type
+
+pub struct Point<T> {
+    pub x: T,
+    pub y: T,
+}
+
+impl<T> Point<T> {
+    pub fn new(x: T, y: T) -> Self {
+        Self { x, y }
+    }
+}
+
+impl<T: Copy + Mul> Point<T> {
+    pub fn mul(self, val: T) -> Point<T::Output> {
+        Point {
+            x: val * self.x,
+            y: val * self.y,
+        }
+    }
+}
+
+impl<T: Add> Add for Point<T> {
+    type Output = Point<T::Output>;
+
+    fn add(self, other: Self) -> Self::Output {
+        Point {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+impl<T: Clone> Clone for Point<T> {
+    fn clone(&self) -> Self {
+        Self {
+            x: self.x.clone(),
+            y: self.y.clone(),
+        }
+    }
+}
+
+impl<T: Copy> Copy for Point<T> {}

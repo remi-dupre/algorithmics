@@ -73,7 +73,7 @@ impl FromStr for Policy {
 
 #[cfg(test)]
 mod tests {
-    use crate::day2::*;
+    use crate::day02::*;
 
     const EXAMPLE: &str = crate::lines! {
         "1-3 a: abcde"

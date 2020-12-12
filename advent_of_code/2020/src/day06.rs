@@ -104,7 +104,7 @@ pub fn part_2_slice(groups: &[Vec<&[u8]>]) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use crate::day6::*;
+    use crate::day06::*;
 
     const EXAMPLE: &str = crate::lines! {
         "abc"

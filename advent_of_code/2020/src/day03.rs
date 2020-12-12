@@ -1,24 +1,8 @@
 use crate::utils::Matrix;
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub enum Cell {
-    Empty,
-    Tree,
-}
+use std::convert::TryFrom;
 
 pub fn generator(input: &str) -> Result<Matrix<Cell>, String> {
-    let width = input.lines().next().map(str::len).unwrap_or(0);
-    let data: Result<Vec<_>, _> = input
-        .lines()
-        .flat_map(|line| {
-            line.chars().map(|c| match c {
-                '.' => Ok(Cell::Empty),
-                '#' => Ok(Cell::Tree),
-                _ => Err(format!("invalid cell `{}`", c)),
-            })
-        })
-        .collect();
-    Ok(Matrix::new(data?, width))
+    input.parse()
 }
 
 fn slope(
@@ -47,12 +31,34 @@ pub fn part_2(grid: &Matrix<Cell>) -> usize {
 }
 
 // ---
+// --- Structs
+// ---
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub enum Cell {
+    Empty,
+    Tree,
+}
+
+impl TryFrom<char> for Cell {
+    type Error = String;
+
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        match value {
+            '.' => Ok(Cell::Empty),
+            '#' => Ok(Cell::Tree),
+            _ => Err(format!("invalid cell `{}`", value)),
+        }
+    }
+}
+
+// ---
 // --- Tests
 // ---
 
 #[cfg(test)]
 mod tests {
-    use crate::day3::*;
+    use crate::day03::*;
 
     const EXAMPLE: &str = crate::lines! {
         "..##.........##.........##.........##.........##.........##......."

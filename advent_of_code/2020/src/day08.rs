@@ -180,7 +180,7 @@ pub enum Instruction {
 
 #[cfg(test)]
 mod tests {
-    use crate::day8::*;
+    use crate::day08::*;
 
     const EXAMPLE: &str = crate::lines! {
         "nop +0"

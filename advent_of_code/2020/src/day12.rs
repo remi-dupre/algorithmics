@@ -115,7 +115,7 @@ impl TryFrom<&str> for Card {
 
 // ---
 // --- Tests
-// ---#![feature(min_const_generics)]
+// ---
 
 #[cfg(test)]
 mod tests {

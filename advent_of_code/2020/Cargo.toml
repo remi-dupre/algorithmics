@@ -4,8 +4,12 @@ version = "0.1.0"
 authors = ["Rémi Dupré <r.dupre@qwant.com>"]
 edition = "2018"
 
+[profile.release]
+debug = true
+
 [dependencies]
 aoc-main = { version = "*", features = ["bench"] }
 bytecount = "0.6.2"
 fixedbitset = "0.3.1"
+fnv = "1.0.3"
 regex = "1"

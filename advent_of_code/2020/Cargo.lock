@@ -29,7 +29,6 @@ dependencies = [
  "aoc-main",
  "bytecount",
  "fixedbitset",
- "fnv",
  "regex",
 ]
 

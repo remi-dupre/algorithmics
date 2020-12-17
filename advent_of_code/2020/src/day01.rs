@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 use std::num::ParseIntError;
 
+use rustc_hash::FxHashSet;
+
 const TARGET: u32 = 2020;
 
 pub fn generator(input: &str) -> Result<Vec<u32>, ParseIntError> {
@@ -13,6 +15,18 @@ pub fn part_1_array(input: &[u32]) -> Option<u32> {
 
     for &num in &numbers {
         if numbers.binary_search(&(TARGET - num)).is_ok() {
+            return Some(num * (TARGET - num));
+        }
+    }
+
+    None
+}
+
+pub fn part_1_fxhashset(input: &[u32]) -> Option<u32> {
+    let numbers: FxHashSet<_> = input.iter().copied().collect();
+
+    for &num in input {
+        if numbers.contains(&(TARGET - num)) {
             return Some(num * (TARGET - num));
         }
     }

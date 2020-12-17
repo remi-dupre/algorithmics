@@ -1,9 +1,9 @@
-use std::collections::{HashMap, HashSet};
 use std::error::Error;
 
 use regex::Regex;
+use rustc_hash::{FxHashMap, FxHashSet};
 
-type Graph<'i> = HashMap<&'i str, Vec<(&'i str, usize)>>;
+type Graph<'i> = FxHashMap<&'i str, Vec<(&'i str, usize)>>;
 
 pub fn generator(input: &str) -> Result<Graph, Box<dyn Error>> {
     let re = Regex::new(r"(?P<count>\d+) (?P<color>.+?) bags?").unwrap();
@@ -28,7 +28,7 @@ pub fn generator(input: &str) -> Result<Graph, Box<dyn Error>> {
         }
     });
 
-    let mut graph = HashMap::new();
+    let mut graph = FxHashMap::default();
 
     for edge in edges {
         let (source, target, weight) = edge?;
@@ -42,7 +42,7 @@ pub fn generator(input: &str) -> Result<Graph, Box<dyn Error>> {
 }
 
 fn reverse<'i>(graph: &Graph<'i>) -> Graph<'i> {
-    let mut rev = HashMap::new();
+    let mut rev = FxHashMap::default();
 
     for (source, target, weight) in graph.iter().flat_map(|(&source, targets)| {
         targets
@@ -59,7 +59,7 @@ fn reverse<'i>(graph: &Graph<'i>) -> Graph<'i> {
 }
 
 pub fn part_1(graph: &Graph) -> usize {
-    fn run<'i>(graph: &Graph<'i>, node: &'i str, seen: &mut HashSet<&'i str>) -> usize {
+    fn run<'i>(graph: &Graph<'i>, node: &'i str, seen: &mut FxHashSet<&'i str>) -> usize {
         if seen.contains(node) {
             return 0;
         }
@@ -76,7 +76,7 @@ pub fn part_1(graph: &Graph) -> usize {
         }
     }
 
-    run(&reverse(graph), "shiny gold", &mut HashSet::new()) - 1
+    run(&reverse(graph), "shiny gold", &mut FxHashSet::default()) - 1
 }
 
 pub fn part_2(graph: &Graph) -> usize {

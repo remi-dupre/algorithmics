@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 const FIELDS_REQUIRED: &[&str] = &["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"];
 
-pub fn generator(input: &str) -> Result<Vec<HashMap<&str, &str>>, String> {
+pub fn generator(input: &str) -> Result<Vec<FxHashMap<&str, &str>>, String> {
     input
         .split("\n\n")
         .map(|password| {
@@ -19,13 +19,13 @@ pub fn generator(input: &str) -> Result<Vec<HashMap<&str, &str>>, String> {
         .collect()
 }
 
-pub fn has_required_fields(password: &HashMap<&str, &str>) -> bool {
+pub fn has_required_fields(password: &FxHashMap<&str, &str>) -> bool {
     FIELDS_REQUIRED
         .iter()
         .all(|&field| password.contains_key(field))
 }
 
-pub fn part_1<'a>(passwords: &[HashMap<&'a str, &'a str>]) -> usize {
+pub fn part_1<'a>(passwords: &[FxHashMap<&'a str, &'a str>]) -> usize {
     passwords
         .iter()
         .filter(|&password| has_required_fields(password))
@@ -64,7 +64,7 @@ pub fn is_valid_field(key: &str, val: &str) -> bool {
     }
 }
 
-pub fn part_2(passwords: &[HashMap<&str, &str>]) -> usize {
+pub fn part_2(passwords: &[FxHashMap<&str, &str>]) -> usize {
     passwords
         .iter()
         .filter(|&password| has_required_fields(password))

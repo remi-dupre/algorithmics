@@ -1,7 +1,7 @@
 use std::convert::{TryFrom, TryInto};
 use std::error::Error;
 
-use crate::utils::Point;
+use crate::utils::Point2D;
 
 pub fn generator(input: &str) -> Result<Vec<Op>, Box<dyn Error>> {
     input
@@ -35,26 +35,25 @@ pub fn generator(input: &str) -> Result<Vec<Op>, Box<dyn Error>> {
 }
 
 pub fn part_1(operations: &[Op]) -> i32 {
-    let (_, pos) =
-        operations.iter().fold(
-            (Card::East, Point::new(0, 0)),
-            |(curr_dir, pos), op| match *op {
-                Op::Forward(dist) => (curr_dir, pos + curr_dir.as_offset().mul(dist)),
-                Op::Direction(dir, dist) => (curr_dir, pos + dir.as_offset().mul(dist)),
-                Op::Rotate(rot) => ((0..rot).fold(curr_dir, |dir, _| dir.next()), pos),
-            },
-        );
+    let (_, pos) = operations.iter().fold(
+        (Card::East, Point2D::new(0, 0)),
+        |(curr_dir, pos), op| match *op {
+            Op::Forward(dist) => (curr_dir, pos + curr_dir.as_offset().mul(dist)),
+            Op::Direction(dir, dist) => (curr_dir, pos + dir.as_offset().mul(dist)),
+            Op::Rotate(rot) => ((0..rot).fold(curr_dir, |dir, _| dir.next()), pos),
+        },
+    );
 
     pos.x.abs() + pos.y.abs()
 }
 
 pub fn part_2(operations: &[Op]) -> i32 {
     let (ship, _) = operations.iter().fold(
-        (Point::new(0, 0), Point::new(10, 1)),
+        (Point2D::new(0, 0), Point2D::new(10, 1)),
         |(ship, wp), op| match *op {
             Op::Forward(dist) => (ship + wp.mul(dist), wp),
             Op::Direction(dir, dist) => (ship, wp + dir.as_offset().mul(dist)),
-            Op::Rotate(rot) => (ship, (0..rot).fold(wp, |wp, _| Point::new(wp.y, -wp.x))),
+            Op::Rotate(rot) => (ship, (0..rot).fold(wp, |wp, _| Point2D::new(wp.y, -wp.x))),
         },
     );
 
@@ -80,12 +79,12 @@ pub enum Card {
 }
 
 impl Card {
-    fn as_offset(self) -> Point<i32> {
+    fn as_offset(self) -> Point2D<i32> {
         match self {
-            Self::East => Point::new(1, 0),
-            Self::South => Point::new(0, -1),
-            Self::West => Point::new(-1, 0),
-            Self::North => Point::new(0, 1),
+            Self::East => Point2D::new(1, 0),
+            Self::South => Point2D::new(0, -1),
+            Self::West => Point2D::new(-1, 0),
+            Self::North => Point2D::new(0, 1),
         }
     }
 

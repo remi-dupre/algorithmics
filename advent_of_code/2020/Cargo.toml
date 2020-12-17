@@ -4,9 +4,13 @@ version = "0.1.0"
 authors = ["Rémi Dupré <r.dupre@qwant.com>"]
 edition = "2018"
 
+[profile.release]
+debug = true
+
+
 [dependencies]
 aoc-main = { version = "*", features = ["bench"] }
 bytecount = "0.6.2"
 fixedbitset = "0.3.1"
 regex = "1"
-smartstring = { version = "0.2.5", features = ["union"] }
+rustc-hash = "1.1.0"

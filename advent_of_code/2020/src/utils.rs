@@ -1,6 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
-use std::ops::{Add, Index, IndexMut, Mul};
+use std::ops::{Index, IndexMut};
 use std::str::FromStr;
 
 #[macro_export]
@@ -83,6 +83,18 @@ impl<T> Matrix<T> {
         self.data.iter()
     }
 
+    pub fn values_pos(&self) -> impl Iterator<Item = (usize, usize, &T)> {
+        self.data
+            .chunks(self.width())
+            .enumerate()
+            .flat_map(|(row, row_vals)| {
+                row_vals
+                    .iter()
+                    .enumerate()
+                    .map(move |(col, val)| (col, row, val))
+            })
+    }
+
     pub fn iter_pos(&self) -> impl Iterator<Item = (usize, usize)> {
         let height = self.height();
         let width = self.width();
@@ -139,44 +151,97 @@ impl<T: fmt::Debug> fmt::Debug for Matrix<T> {
 
 // Point type
 
-pub struct Point<T> {
-    pub x: T,
-    pub y: T,
-}
+macro_rules! make_point_types {
+    ($( $name: ident => $( $coord: ident ),+ ; )*) => {
+        use std::hash::Hash;
+        use std::ops::{Add, Mul, Sub};
 
-impl<T> Point<T> {
-    pub fn new(x: T, y: T) -> Self {
-        Self { x, y }
+        $(
+            #[derive(Clone, Copy, Eq, Hash, PartialEq)]
+            pub struct $name<T: Copy + Eq + Hash> {$(
+                pub $coord: T,
+            )+}
+
+            impl<T: Copy + Eq + Hash> $name<T> {
+                #[allow(dead_code)]
+                pub fn new($($coord: T),+) -> Self {
+                    Self { $($coord),+ }
+                }
+            }
+
+            impl $name<i8> {
+                #[allow(dead_code)]
+                pub fn neighbours(&self) -> impl Iterator<Item = Self> {
+                    let self_cpy = *self;
+                    $( let mut $coord = 0; )+
+
+                    std::iter::from_fn(move || {
+                        let mut increment = || {
+                            $(
+                                $coord = ($coord + 2) % 3 - 1;
+
+                                if $coord != 0 {
+                                    return true;
+                                }
+                            )+
+
+                            false
+                        };
+
+                        if increment() {
+                            Some(Self {$(
+                                $coord: self_cpy.$coord + $coord,
+                            )+})
+                        } else {
+                            None
+                        }
+                    })
+                }
+            }
+
+            impl<T: Copy + Eq + Hash + Mul> $name<T>
+            where
+                T::Output: Copy + Eq + Hash,
+            {
+                #[allow(dead_code)]
+                pub fn mul(self, val: T) -> $name<T::Output> {
+                    $name {$(
+                        $coord: self.$coord * val,
+                    )+}
+                }
+            }
+
+            impl<T: Add + Copy + Eq + Hash> Add for $name<T>
+            where
+                T::Output: Copy + Eq + Hash,
+            {
+                type Output = $name<T::Output>;
+
+                fn add(self, other: Self) -> Self::Output {
+                    Self::Output {$(
+                        $coord: self.$coord + other.$coord,
+                    )+}
+                }
+            }
+
+            impl<T: Copy + Eq + Hash + Sub> Sub for $name<T>
+            where
+                T::Output: Copy + Eq + Hash + Sub,
+            {
+                type Output = $name<T::Output>;
+
+                fn sub(self, other: Self) -> Self::Output {
+                    Self::Output {$(
+                        $coord: self.$coord - other.$coord,
+                    )+}
+                }
+            }
+        )*
     }
 }
 
-impl<T: Copy + Mul> Point<T> {
-    pub fn mul(self, val: T) -> Point<T::Output> {
-        Point {
-            x: val * self.x,
-            y: val * self.y,
-        }
-    }
+make_point_types! {
+    Point2D => x, y;
+    Point3D => x, y, z;
+    Point4D => x, y, z, w;
 }
-
-impl<T: Add> Add for Point<T> {
-    type Output = Point<T::Output>;
-
-    fn add(self, other: Self) -> Self::Output {
-        Point {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
-    }
-}
-
-impl<T: Clone> Clone for Point<T> {
-    fn clone(&self) -> Self {
-        Self {
-            x: self.x.clone(),
-            y: self.y.clone(),
-        }
-    }
-}
-
-impl<T: Copy> Copy for Point<T> {}

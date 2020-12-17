@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use fixedbitset::FixedBitSet;
+use rustc_hash::FxHashSet;
 
 pub fn generator(input: &str) -> Vec<Vec<&[u8]>> {
     input
@@ -48,6 +49,19 @@ pub fn part_1_bitset(groups: &[Vec<&[u8]>]) -> usize {
             }
 
             answered.count_ones(..)
+        })
+        .sum()
+}
+
+pub fn part_1_fxhashset(groups: &[Vec<&[u8]>]) -> usize {
+    groups
+        .iter()
+        .map(|group| {
+            group
+                .iter()
+                .flat_map(|person| person.iter())
+                .collect::<FxHashSet<_>>()
+                .len()
         })
         .sum()
 }

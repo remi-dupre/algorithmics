@@ -1,6 +1,7 @@
-use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::ops::RangeInclusive;
+
+use rustc_hash::{FxHashMap, FxHashSet};
 
 pub struct Input<'i> {
     rules: Vec<(&'i str, RangeInclusive<u16>)>,
@@ -59,7 +60,7 @@ pub fn generator(input: &str) -> Result<Input<'_>, Box<dyn Error>> {
 }
 
 pub fn part_1(input: &Input) -> u16 {
-    let valid_domain: HashSet<_> = input
+    let valid_domain: FxHashSet<_> = input
         .rules
         .iter()
         .flat_map(|(_, rng)| rng.clone())
@@ -87,7 +88,7 @@ pub fn part_2(input: &Input) -> Option<u128> {
 
     // For a given value: the set of feasible fields it can hold
     let feasible_for_val = {
-        let mut res = HashMap::new();
+        let mut res = FxHashMap::default();
 
         for (field, rng) in &input.rules {
             for val in rng.clone() {
@@ -103,8 +104,8 @@ pub fn part_2(input: &Input) -> Option<u128> {
         res
     };
 
-    let fields_mapping: HashMap<_, _> = {
-        let mut feasible_fields = HashMap::new();
+    let fields_mapping: FxHashMap<_, _> = {
+        let mut feasible_fields = FxHashMap::default();
 
         for ticket in &input.nearby_tickets {
             if !ticket.iter().all(|val| feasible_for_val.contains_key(val)) {
@@ -191,6 +192,6 @@ mod tests {
 
     #[test]
     fn test_part_2() {
-        assert_eq!(11 * 12 * 13, part_2(&generator(EXAMPLE_2).unwrap()));
+        assert_eq!(Some(11 * 12 * 13), part_2(&generator(EXAMPLE_2).unwrap()));
     }
 }

@@ -1,6 +1,7 @@
-use std::collections::HashMap;
 use std::convert::TryInto;
 use std::error::Error;
+
+use rustc_hash::FxHashMap;
 
 pub enum Op {
     Set { addr: u64, val: u64 },
@@ -44,13 +45,16 @@ pub fn part_1(operations: &[Op]) -> u64 {
 
     let mem = operations
         .iter()
-        .fold((HashMap::new(), &[0; 36]), |(mut mem, mask), op| match op {
-            Op::Set { addr, val } => {
-                mem.insert(*addr, apply_mask(&mask, *val));
-                (mem, mask)
-            }
-            Op::BitMask(mask) => (mem, mask),
-        })
+        .fold(
+            (FxHashMap::default(), &[0; 36]),
+            |(mut mem, mask), op| match op {
+                Op::Set { addr, val } => {
+                    mem.insert(*addr, apply_mask(&mask, *val));
+                    (mem, mask)
+                }
+                Op::BitMask(mask) => (mem, mask),
+            },
+        )
         .0;
 
     mem.into_values().sum()
@@ -74,16 +78,19 @@ pub fn part_2(operations: &[Op]) -> u64 {
 
     let mem = operations
         .iter()
-        .fold((HashMap::new(), &[0; 36]), |(mut mem, mask), op| match op {
-            Op::Set { addr, val } => {
-                for addr in apply_mask(mask, *addr) {
-                    mem.insert(addr, *val);
-                }
+        .fold(
+            (FxHashMap::default(), &[0; 36]),
+            |(mut mem, mask), op| match op {
+                Op::Set { addr, val } => {
+                    for addr in apply_mask(mask, *addr) {
+                        mem.insert(addr, *val);
+                    }
 
-                (mem, mask)
-            }
-            Op::BitMask(mask) => (mem, mask),
-        })
+                    (mem, mask)
+                }
+                Op::BitMask(mask) => (mem, mask),
+            },
+        )
         .0;
 
     mem.into_values().sum()

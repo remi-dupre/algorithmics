@@ -12,7 +12,6 @@ pub fn nth_spoken(init: &[u32], nth: u32) -> Result<u32, Box<dyn Error>> {
         let mut said = vec![u32::MAX; usize::try_from(nth).expect("input must fit in usize")];
 
         move |step: u32, val: u32| {
-            // let last_time = std::mem::replace(&mut said[usize::try_from(val)?], step);
             let last_time = std::mem::replace(&mut said[usize::try_from(val)?], step);
             Ok(step.saturating_sub(last_time))
         }

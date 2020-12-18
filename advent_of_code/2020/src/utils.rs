@@ -178,6 +178,7 @@ macro_rules! make_point_types {
                     std::iter::from_fn(move || {
                         let mut increment = || {
                             $(
+                                // assigned values: 0 -> 1 -> -1 -> 0
                                 $coord = ($coord + 2) % 3 - 1;
 
                                 if $coord != 0 {

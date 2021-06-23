@@ -1,4 +1,4 @@
-use crate::util::arithmetic::divisors;
+use crate::util::arithmetic::Divisors;
 
 const MIN_COUNT: usize = 500;
 
@@ -11,6 +11,6 @@ fn triangles() -> impl Iterator<Item = u64> {
 
 pub fn solve() -> u64 {
     triangles()
-        .find(|x| divisors(*x).count() >= MIN_COUNT)
+        .find(|x| x.divisors().count() >= MIN_COUNT)
         .unwrap()
 }

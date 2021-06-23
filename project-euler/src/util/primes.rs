@@ -3,6 +3,8 @@ use std::convert::TryInto;
 
 #[cached]
 fn sieve(max: u64) -> Vec<bool> {
+    assert!(max.is_power_of_two());
+
     let max: usize = max.try_into().unwrap();
     let mut prime = vec![true; max + 1];
     prime[0] = false;
@@ -24,7 +26,7 @@ fn sieve(max: u64) -> Vec<bool> {
 }
 
 pub fn primes_bellow(max: u64) -> impl Iterator<Item = u64> {
-    sieve(max)
+    sieve(max.next_power_of_two())
         .into_iter()
         .enumerate()
         .filter(|(_, prime)| *prime)
@@ -49,6 +51,10 @@ pub fn primes() -> impl Iterator<Item = u64> {
     .flatten()
 }
 
+pub fn is_prime(n: u64) -> bool {
+    sieve(n.next_power_of_two())[n as usize]
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -63,5 +69,11 @@ mod test {
     fn test_primes() {
         let start: Vec<_> = primes().take(6).collect();
         assert_eq!(&start, &[2, 3, 5, 7, 11, 13]);
+    }
+
+    #[test]
+    fn test_is_prime() {
+        assert!(is_prime(13));
+        assert!(!is_prime(42));
     }
 }

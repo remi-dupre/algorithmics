@@ -1,7 +1,7 @@
-use crate::util::arithmetic::divisors;
+use crate::util::arithmetic::Divisors;
 
 fn is_amicable(x: u64) -> bool {
-    let d = |n| divisors(n).filter(|d| *d < n).sum();
+    let d = |n: u64| n.divisors().filter(|d| *d < n).sum();
     x > 1 && d(x) != x && d(d(x)) == x
 }
 

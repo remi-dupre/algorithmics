@@ -9,3 +9,7 @@ cached = { version = "0.23.0", default_features = false, features = [ "proc_macr
 colored = "2.0.0"
 fxhash = "0.2.1"
 num-bigint = "0.4.0"
+num-integer = "0.1.44"
+num-rational = "0.4.0"
+num-traits = "0.2.14"
+rayon = "1.5.1"

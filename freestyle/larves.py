@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+"""
+This is a tiny script that computes the probability of winning in a mini-game
+introduced for Dofus Temporis V.
+
+In short, the minigame consists of a race between 4 larvas on a 15-cells long
+grid. Each larva makes 1 to 3 cells of progress each turn and you have to bet
+on the winning larva. The twist is that your larva will play first each turn,
+so this script evaluates how much it gives you an advantage.
+"""
 from functools import lru_cache
 from typing import List
 

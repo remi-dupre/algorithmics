@@ -194,6 +194,17 @@ mod test {
     use super::*;
 
     #[test]
+    fn test_nb_digits() {
+        assert_eq!(0u32.nb_digits(10), 1);
+        assert_eq!(9u32.nb_digits(10), 1);
+        assert_eq!(10u32.nb_digits(10), 2);
+        assert_eq!(19u32.nb_digits(10), 2);
+        assert_eq!(1_000_000_u32.nb_digits(10), 7);
+        assert_eq!(0b0_u32.nb_digits(2), 1);
+        assert_eq!(0b111_u32.nb_digits(2), 3);
+    }
+
+    #[test]
     fn test_digits() {
         assert_eq!(0u64.digits(10).collect::<Vec<_>>(), [0]);
         assert_eq!(156u8.digits(10).collect::<Vec<_>>(), [1, 5, 6]);

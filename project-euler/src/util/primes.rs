@@ -1,28 +1,29 @@
 use cached::proc_macro::cached;
+use rayon::prelude::*;
 use std::convert::TryInto;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[cached]
 fn sieve(max: u64) -> Vec<bool> {
     assert!(max.is_power_of_two());
 
     let max: usize = max.try_into().unwrap();
-    let mut prime = vec![true; max + 1];
-    prime[0] = false;
-    prime[1] = false;
+    let mut prime: Vec<AtomicBool> = (0..=max).map(|_| true.into()).collect();
+    // let mut prime = vec![true; max + 1];
+    prime[0] = false.into();
+    prime[1] = false.into();
 
-    for x in 2..=max {
-        if !prime[x] {
-            continue;
+    (2..=max).collect::<Vec<_>>().into_par_iter().for_each(|x| {
+        if prime[x].load(Ordering::Acquire) {
+            prime[x..]
+                .iter()
+                .step_by(x)
+                .skip(1)
+                .for_each(|v| v.store(false, Ordering::Release));
         }
+    });
 
-        prime[x..]
-            .iter_mut()
-            .step_by(x)
-            .skip(1)
-            .for_each(|v| *v = false);
-    }
-
-    prime
+    prime.into_iter().map(|b| b.into_inner()).collect()
 }
 
 pub fn primes_bellow(max: u64) -> impl Iterator<Item = u64> {
@@ -35,7 +36,7 @@ pub fn primes_bellow(max: u64) -> impl Iterator<Item = u64> {
 
 pub fn primes() -> impl Iterator<Item = u64> {
     let mut prev_max = 0;
-    let mut max = 8;
+    let mut max = 256;
 
     std::iter::from_fn(move || {
         let res = primes_bellow(max)

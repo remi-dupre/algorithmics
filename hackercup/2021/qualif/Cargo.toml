@@ -1,0 +1,8 @@
+[package]
+name = "qualif"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+testcase = { path = "/home/remi/code/testcase" }
+testcase_derive = { path = "/home/remi/code/testcase/testcase_derive" }

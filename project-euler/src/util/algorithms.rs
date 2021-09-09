@@ -6,6 +6,10 @@ use num_traits::Zero;
 
 use crate::util::arithmetic::{Digits, Factorial};
 
+// ---
+// --- Permutations
+// ---
+
 pub fn next_permutation<T: Ord>(nums: &mut [T]) -> bool {
     if let Some(last_ascending) = nums.windows(2).rposition(|w| w[0] < w[1]) {
         let swap_with = nums[last_ascending + 1..]

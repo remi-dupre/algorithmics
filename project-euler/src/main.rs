@@ -45,7 +45,7 @@ main! {
     problem_008, problem_009, problem_010, problem_011, #[skip] problem_012, problem_013, #[skip]
     problem_014, problem_015, problem_017, problem_018, problem_020, problem_021, problem_022,
     #[skip] problem_023, problem_024, problem_025, #[skip] problem_027, problem_029, problem_030,
-    problem_031, problem_034, #[skip] problem_035, problem_036, problem_039, problem_067,
-    problem_101, problem_102, #[skip] problem_104, #[skip] problem_108, #[skip] problem_201,
-    problem_700
+    problem_031, problem_034, #[skip] problem_035, problem_036, problem_039, problem_040,
+    problem_041, problem_067, problem_101, problem_102, #[skip] problem_104, #[skip] problem_108,
+    #[skip] problem_201, problem_700
 }

@@ -1,0 +1,8 @@
+[package]
+name = "qualif"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+testcase = { git = "https://github.com/remi-dupre/testcase-rs.git" }
+testcase_derive = { git = "https://github.com/remi-dupre/testcase-rs.git" }

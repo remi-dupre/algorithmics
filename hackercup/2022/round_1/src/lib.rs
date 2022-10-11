@@ -26,7 +26,41 @@ impl<const M: u64> std::ops::Add for WrapU64<M> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Self((self.0 + rhs.0) % M)
+        let (x, y) = (self.0, rhs.0);
+
+        if 2 * M <= u64::MAX {
+            Self((x + y) % M)
+        } else {
+            Self(if x < M - y { x + y } else { x - (M - y) })
+        }
+    }
+}
+
+impl<const M: u64> std::ops::Sub for WrapU64<M> {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        let (x, y) = (self.0, rhs.0);
+
+        if 2 * M <= u64::MAX {
+            Self((M + x - y) % M)
+        } else {
+            Self(if x >= y { x - y } else { x + (M - y) })
+        }
+    }
+}
+
+impl<const M: u64> std::ops::Mul for WrapU64<M> {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        let (x, y) = (self.0, rhs.0);
+
+        if M * M <= u64::MAX {
+            Self((x * y) % M)
+        } else {
+            Self(((u128::from(x) * u128::from(y)) % u128::from(M)) as u64)
+        }
     }
 }
 
@@ -39,21 +73,5 @@ impl<const M: u64> std::iter::Sum for WrapU64<M> {
         }
 
         res
-    }
-}
-
-impl<const M: u64> std::ops::Sub for WrapU64<M> {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        Self((self.0 + M - rhs.0) % M)
-    }
-}
-
-impl<const M: u64> std::ops::Mul for WrapU64<M> {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        Self((self.0 * rhs.0) % M)
     }
 }

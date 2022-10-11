@@ -1,0 +1,14 @@
+[package]
+name = "protohackers"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { version = "1", features = ["backtrace"] }
+futures = "0.3"
+num-bigint = { version = "0.4" }
+serde = { version = "1", features = ["serde_derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
+tokio = { version = "1", features = ["io-util", "macros", "net", "rt"] }
+tracing = { version = "0.1" }
+tracing-subscriber = { version = "0.3", default_features = false, features = ["ansi", "env-filter", "std"] }

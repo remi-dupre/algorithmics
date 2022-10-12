@@ -1,3 +1,4 @@
+use anyhow::Result;
 use futures::Stream;
 use tokio::io::{AsyncRead, AsyncReadExt};
 use tracing_subscriber::filter::LevelFilter;
@@ -20,7 +21,7 @@ pub fn init_logs() {
 pub fn split_at_bytes<'a, R: AsyncRead + 'a>(
     bytes: &'a [u8],
     reader: R,
-) -> impl Stream<Item = Result<Vec<u8>, tokio::io::Error>> + 'a {
+) -> impl Stream<Item = Result<Vec<u8>>> + 'a {
     let reader = Box::pin(reader);
 
     futures::stream::try_unfold(
@@ -45,6 +46,7 @@ pub fn split_at_bytes<'a, R: AsyncRead + 'a>(
 
             let end_pos = end_pos.unwrap();
             let res = buffer.drain(..end_pos).collect();
+            buffer.remove(0);
             Ok(Some((res, (buffer, reader))))
         },
     )

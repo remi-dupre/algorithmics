@@ -1,3 +1,4 @@
+use anyhow::Result;
 use futures::StreamExt;
 use num_bigint::BigInt;
 use serde::Deserialize;
@@ -6,7 +7,6 @@ use tokio::io::AsyncWriteExt;
 use tokio::net::{TcpListener, TcpStream};
 use tracing::{info, trace, warn};
 
-use std::io;
 use std::str::FromStr;
 
 use protohackers::{init_logs, split_at_bytes};
@@ -75,7 +75,7 @@ impl Number {
 }
 
 #[tracing::instrument(skip(socket))]
-async fn client(id: u64, socket: TcpStream) -> io::Result<()> {
+async fn client(id: u64, socket: TcpStream) -> Result<()> {
     info!("Connected");
     let (reader, mut writer) = socket.into_split();
     let mut lines = Box::pin(split_at_bytes(&[b'\n', 10], reader));
@@ -128,7 +128,7 @@ async fn client(id: u64, socket: TcpStream) -> io::Result<()> {
 }
 
 #[tokio::main(flavor = "current_thread")]
-async fn main() -> io::Result<()> {
+async fn main() -> Result<()> {
     init_logs();
 
     let ip = std::env::args()

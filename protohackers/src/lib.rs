@@ -27,26 +27,30 @@ pub fn split_at_bytes<'a, R: AsyncRead + 'a>(
     futures::stream::try_unfold(
         (Vec::new(), reader),
         move |(mut buffer, mut reader)| async move {
-            let mut end_pos = None;
+            let end_pos = {
+                let mut prev_len = 0;
 
-            while end_pos.is_none() {
-                let prev_len = buffer.len();
+                loop {
+                    let end_pos = buffer
+                        .iter()
+                        .enumerate()
+                        .skip(prev_len)
+                        .find(|(_, b)| bytes.contains(b))
+                        .map(|(i, _)| i);
 
-                if reader.read_buf(&mut buffer).await? == 0 {
-                    return Ok(None);
+                    if let Some(pos) = end_pos {
+                        break pos;
+                    }
+
+                    prev_len = buffer.len();
+
+                    if reader.read_buf(&mut buffer).await? == 0 {
+                        return Ok(None);
+                    }
                 }
+            };
 
-                end_pos = buffer
-                    .iter()
-                    .enumerate()
-                    .skip(prev_len)
-                    .find(|(_, b)| bytes.contains(b))
-                    .map(|(i, _)| i);
-            }
-
-            let end_pos = end_pos.unwrap();
-            let res = buffer.drain(..end_pos).collect();
-            buffer.remove(0);
+            let res = buffer.drain(..=end_pos).collect();
             Ok(Some((res, (buffer, reader))))
         },
     )

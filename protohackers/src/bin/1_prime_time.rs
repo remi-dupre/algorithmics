@@ -78,7 +78,7 @@ impl Number {
 async fn client(id: u64, socket: TcpStream) -> Result<()> {
     info!("Connected");
     let (reader, mut writer) = socket.into_split();
-    let mut lines = Box::pin(split_at_bytes(&[b'\n', 10], reader));
+    let mut lines = Box::pin(split_at_bytes(&[b'\n'], reader));
 
     while let Some(line) = lines.next().await {
         let line = line?;

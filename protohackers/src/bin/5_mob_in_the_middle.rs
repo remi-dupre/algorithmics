@@ -70,8 +70,8 @@ async fn proxy(id: u64, socket: TcpStream) -> Result<()> {
         .context("Could not connect to server")?
         .into_split();
 
-    let mut client_lines = Box::pin(split_at_bytes(&[b'\n', 10], client_reader)).fuse();
-    let mut server_lines = Box::pin(split_at_bytes(&[b'\n', 10], server_reader)).fuse();
+    let mut client_lines = Box::pin(split_at_bytes(&[b'\n'], client_reader).fuse());
+    let mut server_lines = Box::pin(split_at_bytes(&[b'\n'], server_reader).fuse());
 
     loop {
         futures::select_biased! {

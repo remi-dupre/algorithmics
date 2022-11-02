@@ -32,7 +32,12 @@ struct Client {
 impl Client {
     async fn new(id: u64, tcp: TcpStream) -> Result<Self> {
         let (tcp_in, mut tcp_out) = tcp.into_split();
-        let tcp_in = Box::pin(split_at_bytes(&[b'\n', 10], tcp_in));
+
+        let tcp_in = Box::pin(split_at_bytes(&[b'\n'], tcp_in).map(|msg| {
+            let mut msg = msg?;
+            msg.pop();
+            Ok(msg)
+        }));
 
         tcp_out
             .write_all(b"Welcome to chat, please enter your name\n")

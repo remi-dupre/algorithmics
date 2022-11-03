@@ -1,3 +1,9 @@
+//! https://protohackers.com/problem/0
+//!
+//! Deep inside Initrode Global's enterprise management framework lies a component that writes data
+//! to a server and expects to read the same data back. (Think of it as a kind of distributed
+//! system delay-line memory). We need you to write the server to echo the data back.
+
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tracing::{debug, info, trace};

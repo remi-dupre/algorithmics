@@ -1,3 +1,8 @@
+//! https://protohackers.com/problem/2
+//!
+//! Your friendly neighbourhood investment bank is having trouble analysing historical price data.
+//! They need you to build a TCP server that will let clients insert and query timestamped prices.
+
 use std::collections::BTreeMap;
 
 use anyhow::{anyhow, Result};

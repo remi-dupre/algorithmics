@@ -1,3 +1,6 @@
+#![feature(array_chunks)]
+pub mod speed_daemon;
+
 use anyhow::Result;
 use futures::Stream;
 use tokio::io::{AsyncRead, AsyncReadExt};

@@ -1,3 +1,14 @@
+//! https://protohackers.com/problem/4
+//!
+//! It's your first day on the job. Your predecessor, Ken, left in mysterious circumstances, but
+//! not before coming up with a protocol for the new key-value database. You have some doubts about
+//! Ken's motivations, but there's no time for questions! Let's implement his protocol.
+//!
+//!Ken's strange database is a key-value store accessed over UDP. Since UDP does not provide
+//!retransmission of dropped packets, and neither does Ken's protocol, clients have to be careful
+//!not to send requests too fast, and have to accept that some requests or responses may be
+//!dropped.
+
 use std::collections::HashMap;
 use std::sync::Arc;
 

@@ -1,3 +1,22 @@
+//! https://protohackers.com/problem/5
+//!
+//! You're escorted to a dark, smoky, basement office. Big Tony sits the other side of a large
+//! desk, leaning back in his chair, puffing on a cigar that you can only describe as
+//! comedically-oversized. Two of his goons loiter in the doorway. They are tall and wide but not
+//! obviously very bright, which only makes them all the more intimidating. Tony flashes a menacing
+//! grin, revealing an unusual number of gold-plated teeth, and makes you an offer you can't
+//! refuse: he wants you to write a malicious proxy server for Budget Chat.
+//!
+//! For each client that connects to your proxy server, you'll make a corresponding outward
+//! connection to the upstream server. When the client sends a message to your proxy, you'll pass
+//! it on upstream. When the upstream server sends a message to your proxy, you'll pass it on
+//! downstream. Remember that messages in Budget Chat are delimited by newline characters ('\n', or
+//! ASCII 10).
+//!
+//! Most messages are passed back and forth without modification, so that the client believes it is
+//! talking directly to the upstream server, except that you will be rewriting Boguscoin addresses,
+//! in both directions, so that all payments go to Tony.
+
 #![feature(byte_slice_trim_ascii)]
 #![feature(iter_intersperse)]
 

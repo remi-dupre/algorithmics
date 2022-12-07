@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.66"
-aoc-main = { git = "https://github.com/remi-dupre/aoc.git", branch = "main", features = ["bench"] }
+# aoc-main = { git = "https://github.com/remi-dupre/aoc.git", branch = "main" }
+aoc-main = { path = "/home/remi/code/perso/aoc" }

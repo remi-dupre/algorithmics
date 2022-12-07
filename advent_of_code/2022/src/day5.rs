@@ -1,0 +1,123 @@
+use anyhow::{bail, Context, Result};
+
+pub struct Instruction {
+    count: usize,
+    from: usize,
+    to: usize,
+}
+
+pub struct Input {
+    stacks: Vec<Vec<u8>>,
+    instructions: Vec<Instruction>,
+}
+
+pub fn generator(input: &str) -> Result<Input> {
+    let (input_stacks, input_insts) = input
+        .split_once("\n\n")
+        .context("missing separator between stacks and instructions")?;
+
+    let mut stacks = Vec::new();
+
+    for line in input_stacks.lines().rev().skip(1) {
+        for (i, block) in (line.as_bytes())
+            .chunks(4)
+            .map(|block| &block[..3])
+            .enumerate()
+        {
+            match block {
+                [b' ', b' ', b' '] => {}
+                [b'[', d, b']'] => {
+                    let index = i;
+
+                    let stack = loop {
+                        if let Some(stack) = stacks.get_mut(index) {
+                            break stack;
+                        }
+
+                        stacks.push(Vec::new());
+                    };
+
+                    stack.push(*d);
+                }
+                _ => bail!("invalid block format: {:?}", std::str::from_utf8(block)),
+            }
+        }
+    }
+
+    let instructions = input_insts
+        .lines()
+        .map(|line| {
+            let line = line
+                .strip_prefix("move ")
+                .context("could not find prefix 'move' in instruction")?;
+
+            let (count, line) = line
+                .split_once(" from ")
+                .context("could not find separator 'from' in instruction")?;
+
+            let (from, to) = line
+                .split_once(" to ")
+                .context("could not find separator 'to' in instruction")?;
+
+            let count = count.parse()?;
+            let from = from.parse::<usize>()? - 1;
+            let to = to.parse::<usize>()? - 1;
+            Ok(Instruction { count, from, to })
+        })
+        .collect::<Result<_>>()?;
+
+    Ok(Input {
+        stacks,
+        instructions,
+    })
+}
+
+fn output_encoder(stacks: Vec<Vec<u8>>) -> Result<String> {
+    stacks
+        .into_iter()
+        .map(|stack| {
+            stack
+                .last()
+                .map(|c| *c as char)
+                .context("finished with an empty stack")
+        })
+        .collect()
+}
+
+pub fn part1(input: &Input) -> Result<String> {
+    let mut stacks = input.stacks.clone();
+
+    for inst in &input.instructions {
+        let moved: Vec<_> = {
+            let stack = stacks.get_mut(inst.from).context("invalid 'from'")?;
+
+            (0..inst.count)
+                .map(|_| stack.pop().context("not enough elements to move"))
+                .collect::<Result<_>>()?
+        };
+
+        let stack = stacks.get_mut(inst.to).context("invalid 'to'")?;
+        stack.extend(moved);
+    }
+
+    output_encoder(stacks)
+}
+
+pub fn part2(input: &Input) -> Result<String> {
+    let mut stacks = input.stacks.clone();
+
+    for inst in &input.instructions {
+        let moved: Vec<_> = {
+            let stack = stacks.get_mut(inst.from).context("invalid 'from'")?;
+
+            (0..inst.count)
+                .map(|_| stack.pop().context("not enough elements to move"))
+                .collect::<Result<_>>()?
+        };
+
+        let stack = stacks.get_mut(inst.to).context("invalid 'to'")?;
+        stack.extend(moved.into_iter().rev());
+    }
+
+    output_encoder(stacks)
+}

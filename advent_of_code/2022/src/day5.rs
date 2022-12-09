@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use anyhow::{bail, Context, Result};
 
 pub struct Instruction {
@@ -72,6 +74,16 @@ pub fn generator(input: &str) -> Result<Input> {
     })
 }
 
+fn get_mut_pair<T>(slice: &mut [T], x: usize, y: usize) -> Option<(&mut T, &mut T)> {
+    let (head, tail) = slice.split_at_mut(std::cmp::max(x, y));
+
+    match x.cmp(&y) {
+        Ordering::Less => Some((head.get_mut(x)?, tail.first_mut()?)),
+        Ordering::Equal => None,
+        Ordering::Greater => Some((tail.first_mut()?, head.get_mut(y)?)),
+    }
+}
+
 fn output_encoder(stacks: Vec<Vec<u8>>) -> Result<String> {
     stacks
         .into_iter()
@@ -88,16 +100,11 @@ pub fn part1(input: &Input) -> Result<String> {
     let mut stacks = input.stacks.clone();
 
     for inst in &input.instructions {
-        let moved: Vec<_> = {
-            let stack = stacks.get_mut(inst.from).context("invalid 'from'")?;
+        let (from, to) = get_mut_pair(&mut stacks, inst.from, inst.to)
+            .context("could not get pair (from, to)")?;
 
-            (0..inst.count)
-                .map(|_| stack.pop().context("not enough elements to move"))
-                .collect::<Result<_>>()?
-        };
-
-        let stack = stacks.get_mut(inst.to).context("invalid 'to'")?;
-        stack.extend(moved);
+        let moved = from.drain(from.len() - inst.count..).rev();
+        to.extend(moved);
     }
 
     output_encoder(stacks)
@@ -107,16 +114,11 @@ pub fn part2(input: &Input) -> Result<String> {
     let mut stacks = input.stacks.clone();
 
     for inst in &input.instructions {
-        let moved: Vec<_> = {
-            let stack = stacks.get_mut(inst.from).context("invalid 'from'")?;
+        let (from, to) = get_mut_pair(&mut stacks, inst.from, inst.to)
+            .context("could not get pair (from, to)")?;
 
-            (0..inst.count)
-                .map(|_| stack.pop().context("not enough elements to move"))
-                .collect::<Result<_>>()?
-        };
-
-        let stack = stacks.get_mut(inst.to).context("invalid 'to'")?;
-        stack.extend(moved.into_iter().rev());
+        let moved = from.drain(from.len() - inst.count..);
+        to.extend(moved);
     }
 
     output_encoder(stacks)

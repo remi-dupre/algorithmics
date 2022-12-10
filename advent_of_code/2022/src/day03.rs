@@ -34,7 +34,7 @@ impl RuckSack {
     }
 }
 
-pub fn generator(input: &str) -> Result<Vec<RuckSack>> {
+pub fn parse(input: &str) -> Result<Vec<RuckSack>> {
     input
         .lines()
         .map(|line| {

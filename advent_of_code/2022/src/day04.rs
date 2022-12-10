@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use anyhow::{anyhow, Result};
 
-pub fn generator(input: &str) -> Result<Vec<[RangeInclusive<u32>; 2]>> {
+pub fn parse(input: &str) -> Result<Vec<[RangeInclusive<u32>; 2]>> {
     input
         .lines()
         .map(|line| {

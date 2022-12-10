@@ -13,7 +13,7 @@ pub struct Input {
     instructions: Vec<Instruction>,
 }
 
-pub fn generator(input: &str) -> Result<Input> {
+pub fn parse(input: &str) -> Result<Input> {
     let (input_stacks, input_insts) = input
         .split_once("\n\n")
         .context("missing separator between stacks and instructions")?;

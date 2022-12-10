@@ -15,7 +15,7 @@ pub struct Directory {
 impl Directory {
     fn iter_dirs(&self) -> impl Iterator<Item = &Self> + '_ {
         iter::once(self).chain(
-            Box::new(self.directories.values().flat_map(|dir| dir.iter_dirs()))
+            Box::new(self.directories.values().flat_map(Self::iter_dirs))
                 as Box<dyn Iterator<Item = &Self>>,
         )
     }
@@ -71,7 +71,7 @@ pub enum Instruction {
     Cd(String),
 }
 
-pub fn generator(input: &str) -> Result<Vec<Instruction>> {
+pub fn parse(input: &str) -> Result<Vec<Instruction>> {
     input
         .split("$ ")
         .skip(1)

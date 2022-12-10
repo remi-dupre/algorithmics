@@ -80,7 +80,7 @@ impl Tip {
     }
 }
 
-pub fn generator(input: &str) -> Result<Vec<(Tip, Move)>> {
+pub fn parse(input: &str) -> Result<Vec<(Tip, Move)>> {
     input
         .lines()
         .map(|line| {

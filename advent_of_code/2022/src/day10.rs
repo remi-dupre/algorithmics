@@ -113,7 +113,7 @@ pub fn part2(program: &[Instruction]) -> String {
 
             res.push({
                 if (state.register).abs_diff((cycle - start) as _) <= 1 {
-                    '#'
+                    '░'
                 } else {
                     ' '
                 }

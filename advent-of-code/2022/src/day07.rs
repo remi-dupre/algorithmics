@@ -71,7 +71,7 @@ pub enum Instruction<'i> {
     Cd(&'i str),
 }
 
-pub fn parse<'i>(input: &'i str) -> Result<Vec<Instruction<'i>>> {
+pub fn parse(input: &str) -> Result<Vec<Instruction<'_>>> {
     input
         .split("$ ")
         .skip(1)

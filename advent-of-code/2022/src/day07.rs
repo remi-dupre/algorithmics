@@ -6,21 +6,21 @@ use fxhash::FxHashMap;
 type Size = u64;
 
 #[derive(Debug, Default)]
-pub struct Directory {
-    directories: FxHashMap<String, Directory>,
-    files: FxHashMap<String, u64>,
+pub struct Directory<'i> {
+    directories: FxHashMap<&'i str, Directory<'i>>,
+    files: FxHashMap<&'i str, u64>,
     size: u64,
 }
 
-impl Directory {
-    fn iter_dirs(&self) -> impl Iterator<Item = &Self> + '_ {
+impl<'i> Directory<'i> {
+    fn iter_dirs<'s>(&'s self) -> impl Iterator<Item = &Directory<'i>> + 's {
         iter::once(self).chain(
             Box::new(self.directories.values().flat_map(Self::iter_dirs))
                 as Box<dyn Iterator<Item = &Self>>,
         )
     }
 
-    fn update_from_instructions(&mut self, instructions: &mut &[Instruction]) -> Result<()> {
+    fn update_from_instructions(&mut self, instructions: &mut &[Instruction<'i>]) -> Result<()> {
         while let Some((inst, tail)) = instructions.split_first() {
             *instructions = tail;
 
@@ -29,16 +29,16 @@ impl Directory {
                     for entry in entries {
                         match entry {
                             LsEntry::Dir { name } => {
-                                self.directories.entry(name.to_string()).or_default();
+                                self.directories.entry(name).or_default();
                             }
                             LsEntry::File { name, size } => {
-                                self.files.insert(name.to_string(), *size);
+                                self.files.insert(name, *size);
                             }
                         }
                     }
                 }
                 Instruction::Cd(name) => {
-                    if name == ".." {
+                    if *name == ".." {
                         break;
                     }
 
@@ -60,18 +60,18 @@ impl Directory {
 }
 
 #[derive(Debug)]
-pub enum LsEntry {
-    Dir { name: String },
-    File { name: String, size: Size },
+pub enum LsEntry<'i> {
+    Dir { name: &'i str },
+    File { name: &'i str, size: Size },
 }
 
 #[derive(Debug)]
-pub enum Instruction {
-    Ls(Vec<LsEntry>),
-    Cd(String),
+pub enum Instruction<'i> {
+    Ls(Vec<LsEntry<'i>>),
+    Cd(&'i str),
 }
 
-pub fn parse(input: &str) -> Result<Vec<Instruction>> {
+pub fn parse<'i>(input: &'i str) -> Result<Vec<Instruction<'i>>> {
     input
         .split("$ ")
         .skip(1)
@@ -79,7 +79,7 @@ pub fn parse(input: &str) -> Result<Vec<Instruction>> {
             let cmd = cmd.trim_end();
 
             let inst = match cmd.split_at(2) {
-                ("cd", path) => Instruction::Cd(path[1..].to_string()),
+                ("cd", path) => Instruction::Cd(&path[1..]),
                 ("ls", tail) => {
                     let tail = tail.trim_start();
 
@@ -89,8 +89,6 @@ pub fn parse(input: &str) -> Result<Vec<Instruction>> {
                             let (kind, name) = line
                                 .split_once(' ')
                                 .context("missing space separator in ls response")?;
-
-                            let name = name.to_string();
 
                             Ok({
                                 if kind == "dir" {

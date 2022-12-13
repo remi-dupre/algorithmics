@@ -45,7 +45,7 @@ pub fn parse(input: &str) -> Result<Vec<RuckSack>> {
             }
 
             for b in line.bytes() {
-                if !matches!(b, b'a'..=b'z' | b'A'..=b'Z') {
+                if !b.is_ascii_alphabetic() {
                     bail!("got invalid item: {b}");
                 }
             }

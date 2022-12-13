@@ -1,3 +1,6 @@
+#![feature(array_chunks)]
+#![feature(byte_slice_trim_ascii)]
+
 pub mod util;
 
 mod day01;
@@ -12,6 +15,7 @@ mod day09;
 pub mod day10;
 mod day11;
 mod day12;
+mod day13;
 
 aoc_main::main! {
     year 2022;
@@ -27,4 +31,5 @@ aoc_main::main! {
     day10: parse? => part1, part2;
     day11: parse? => part1, part2;
     day12: parse  => part1?, part2?;
+    day13: parse? => part1, part2;
 }

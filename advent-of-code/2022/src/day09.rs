@@ -33,8 +33,8 @@ fn moves(input: &[(Direction, usize)]) -> impl Iterator<Item = Direction> + '_ {
         .flat_map(|(dir, count)| iter::repeat(*dir).take(*count))
 }
 
-fn ensure_abs_ceil(head: (i64, i64), tail: &mut (i64, i64)) -> bool {
-    let diff = i64::max((head.0 - tail.0).abs(), (head.1 - tail.1).abs());
+fn ensure_abs_ceil(head: (i32, i32), tail: &mut (i32, i32)) -> bool {
+    let diff = i32::max((head.0 - tail.0).abs(), (head.1 - tail.1).abs());
     let legal = diff <= 1;
 
     if !legal {
@@ -46,11 +46,11 @@ fn ensure_abs_ceil(head: (i64, i64), tail: &mut (i64, i64)) -> bool {
 }
 
 fn simulate_rope<const K: usize>(
-    mut rope: [(i64, i64); K],
+    mut rope: [(i32, i32); K],
     mut moves: impl Iterator<Item = Direction>,
-) -> impl Iterator<Item = [(i64, i64); K]> {
+) -> impl Iterator<Item = [(i32, i32); K]> {
     iter::from_fn(move || {
-        let (dx, dy): (i64, i64) = moves.next()?.into();
+        let (dx, dy): (i32, i32) = moves.next()?.into();
         let head = rope.last_mut()?;
         head.0 += dx;
         head.1 += dy;

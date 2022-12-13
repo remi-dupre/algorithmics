@@ -4,21 +4,6 @@ pub type Worry = u64;
 pub type MonkeyId = usize;
 
 #[derive(Clone, Copy)]
-enum StressStrategy {
-    Div(Worry),
-    Mod(Worry),
-}
-
-impl StressStrategy {
-    fn eval(&self, old: Worry) -> Worry {
-        match self {
-            StressStrategy::Div(d) => old / d,
-            StressStrategy::Mod(m) => old % m,
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
 enum BinOp {
     Add,
     Mul,
@@ -99,22 +84,9 @@ impl Test {
 
 #[derive(Clone)]
 pub struct Monkey {
-    items: Vec<Worry>,
+    starting_items: Vec<Worry>,
     operation: Operation,
     test: Test,
-}
-
-impl Monkey {
-    fn inspect<'s>(
-        &'s mut self,
-        stress_strategy: &'s StressStrategy,
-    ) -> impl Iterator<Item = (MonkeyId, Worry)> + 's {
-        self.items.drain(..).map(|worry| {
-            let worry = self.operation.eval(worry);
-            let worry = stress_strategy.eval(worry);
-            (self.test.throws_to(worry), worry)
-        })
-    }
 }
 
 pub fn parse(input: &str) -> Result<Vec<Monkey>> {
@@ -184,7 +156,7 @@ pub fn parse(input: &str) -> Result<Vec<Monkey>> {
         };
 
         res.push(Monkey {
-            items,
+            starting_items: items,
             operation,
             test,
         });
@@ -195,19 +167,35 @@ pub fn parse(input: &str) -> Result<Vec<Monkey>> {
     Ok(res)
 }
 
-fn simulate(monkeys: &[Monkey], steps: u64, stress_strategy: StressStrategy) -> u64 {
-    let mut monkeys = monkeys.to_vec();
-    let mut activity = vec![0u64; monkeys.len()];
-    let mut throws_buffer = Vec::new();
+fn simulate(monkeys: &[Monkey], steps: u64, regulate_stress: impl Fn(Worry) -> Worry) -> usize {
+    struct Item {
+        monkey: MonkeyId,
+        worry: Worry,
+    }
+
+    let mut items: Vec<_> = monkeys
+        .iter()
+        .enumerate()
+        .flat_map(|(monkey_id, monkey)| {
+            monkey.starting_items.iter().map(move |worry| Item {
+                monkey: monkey_id,
+                worry: *worry,
+            })
+        })
+        .collect();
+
+    let mut activity = vec![0; monkeys.len()];
 
     for _ in 0..steps {
-        for i in 0..monkeys.len() {
-            throws_buffer.extend(monkeys[i].inspect(&stress_strategy));
-
-            for (throwed_to, worry) in throws_buffer.drain(..) {
-                activity[i] += 1;
-                monkeys[throwed_to].items.push(worry);
-            }
+        for (monkey_id, (monkey, activity)) in monkeys.iter().zip(&mut activity).enumerate() {
+            *activity += items
+                .iter_mut()
+                .filter(|item| item.monkey == monkey_id)
+                .map(|item| {
+                    item.worry = regulate_stress(monkey.operation.eval(item.worry));
+                    item.monkey = monkey.test.throws_to(item.worry);
+                })
+                .count();
         }
     }
 
@@ -215,15 +203,18 @@ fn simulate(monkeys: &[Monkey], steps: u64, stress_strategy: StressStrategy) -> 
     activity.into_iter().rev().take(2).product()
 }
 
-pub fn part1(monkeys: &[Monkey]) -> u64 {
-    simulate(monkeys, 20, StressStrategy::Div(3))
+pub fn part1(monkeys: &[Monkey]) -> usize {
+    simulate(monkeys, 20, |stress| stress / 3)
 }
 
-pub fn part2(monkeys: &[Monkey]) -> u64 {
-    let mod_by = monkeys
-        .iter()
-        .map(|monkey| monkey.test.divisible_by)
-        .product();
+pub fn part2(monkeys: &[Monkey]) -> usize {
+    /// Computed at compile time to allow compiler optimizations
+    const MAX_WORRY: Worry = 2 * 3 * 5 * 7 * 9 * 11 * 13 * 17 * 19;
 
-    simulate(monkeys, 10_000, StressStrategy::Mod(mod_by))
+    for monkey in monkeys {
+        // Ensure all divisibility rules will apply after stress regulation
+        assert!(MAX_WORRY % monkey.test.divisible_by == 0);
+    }
+
+    simulate(monkeys, 10_000, |stress| stress % MAX_WORRY)
 }

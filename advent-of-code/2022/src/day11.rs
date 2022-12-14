@@ -82,7 +82,6 @@ impl Test {
     }
 }
 
-#[derive(Clone)]
 pub struct Monkey {
     starting_items: Vec<Worry>,
     operation: Operation,
@@ -169,7 +168,7 @@ pub fn parse(input: &str) -> Result<Vec<Monkey>> {
 
 fn simulate(monkeys: &[Monkey], steps: u64, regulate_stress: impl Fn(Worry) -> Worry) -> usize {
     struct Item {
-        monkey: MonkeyId,
+        monkey_id: MonkeyId,
         worry: Worry,
     }
 
@@ -178,7 +177,7 @@ fn simulate(monkeys: &[Monkey], steps: u64, regulate_stress: impl Fn(Worry) -> W
         .enumerate()
         .flat_map(|(monkey_id, monkey)| {
             monkey.starting_items.iter().map(move |worry| Item {
-                monkey: monkey_id,
+                monkey_id,
                 worry: *worry,
             })
         })
@@ -190,10 +189,10 @@ fn simulate(monkeys: &[Monkey], steps: u64, regulate_stress: impl Fn(Worry) -> W
         for (monkey_id, (monkey, activity)) in monkeys.iter().zip(&mut activity).enumerate() {
             *activity += items
                 .iter_mut()
-                .filter(|item| item.monkey == monkey_id)
+                .filter(|item| item.monkey_id == monkey_id)
                 .map(|item| {
                     item.worry = regulate_stress(monkey.operation.eval(item.worry));
-                    item.monkey = monkey.test.throws_to(item.worry);
+                    item.monkey_id = monkey.test.throws_to(item.worry);
                 })
                 .count();
         }
@@ -211,8 +210,8 @@ pub fn part2(monkeys: &[Monkey]) -> usize {
     /// Computed at compile time to allow compiler optimizations
     const MAX_WORRY: Worry = 2 * 3 * 5 * 7 * 9 * 11 * 13 * 17 * 19;
 
+    // Ensure all divisibility rules will apply after stress regulation
     for monkey in monkeys {
-        // Ensure all divisibility rules will apply after stress regulation
         assert!(MAX_WORRY % monkey.test.divisible_by == 0);
     }
 

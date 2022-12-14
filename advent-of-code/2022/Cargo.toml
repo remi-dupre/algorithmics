@@ -4,13 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.66"
+anyhow = "1"
 fxhash = "0.2"
 
-# aoc-main = { git = "https://github.com/remi-dupre/aoc.git", branch = "main", features = ["bench"] }
 aoc-main = { path = "/home/remi/code/perso/aoc", features = ["bench"] }
+# aoc-main = { git = "https://github.com/remi-dupre/aoc.git", branch = "main", features = ["bench"] }
+# aoc-main = { git = "https://github.com/Pyxels/aoc-lib.git", branch = "feat/colored_times", features = ["bench"] }
 
 [profile.release]
 # debug = true
-lto = "fat"
-codegen-unit = 1
+# lto = "fat"
+# codegen-units = 1

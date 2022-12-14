@@ -1,3 +1,13 @@
+pub mod matrix;
+
+pub fn min_max<T: Ord>(x: T, y: T) -> (T, T) {
+    if x <= y {
+        (x, y)
+    } else {
+        (y, x)
+    }
+}
+
 #[derive(Copy, Clone)]
 pub enum Direction {
     Left,

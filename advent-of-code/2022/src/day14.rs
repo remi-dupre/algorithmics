@@ -56,86 +56,50 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Coord>>> {
     Ok(paths)
 }
 
-fn simulate_fall(map: &mut Map, pos: Coord) -> bool {
-    let mut search_insert_pos = move || {
-        let mut ptr = map.get_ptr(pos).expect("invalid start pos");
-
-        loop {
-            ptr.add_rows(1);
-
-            if !*ptr.get()? {
-                continue;
+fn walk_fall<'m>(
+    mut ptr: MatrixPtr<'m, bool>,
+    counter: &mut u64,
+    has_floor: bool,
+) -> Option<MatrixPtr<'m, bool>> {
+    match ptr.get().copied() {
+        Some(false) => {}
+        Some(true) => return Some(ptr),
+        None => {
+            if has_floor {
+                return Some(ptr);
+            } else {
+                return None;
             }
-
-            ptr.sub_cols(1);
-
-            if !*ptr.get()? {
-                continue;
-            }
-
-            ptr.add_cols(2);
-
-            if !*ptr.get()? {
-                continue;
-            }
-
-            ptr.sub_cols(1);
-            ptr.sub_rows(1);
-            break;
         }
+    }
 
-        assert!(ptr.set(true));
-        Some(())
-    };
+    // Try to fill bellow, exit if end is reached
+    ptr = walk_fall(ptr.add_rows(1), counter, has_floor)?;
+    ptr = walk_fall(ptr.sub_cols(1), counter, has_floor)?;
+    ptr = walk_fall(ptr.add_cols(2), counter, has_floor)?;
 
-    search_insert_pos().is_some()
+    // Reset pointer, fill cell and exit
+    ptr = ptr.sub_rows(1).sub_cols(1);
+    ptr.set(true);
+    *counter += 1;
+    Some(ptr)
 }
 
-fn simulate_fall_with_floor(map: &mut Map, (x, y): Coord, y_max: usize) -> bool {
-    let y_diff = y_max - y - 1;
+fn simulate_fall(path: &[Vec<Coord>], start: Coord, has_floor: bool) -> u64 {
+    let Some(y_max) = path_coords(path).map(|(_, y)| y).max() else {
+        return 0
+    };
 
-    // Ensure that we can move `y_diff` steps to bottom-left or to bottom right.
-    assert!(map.get_ptr((x - y_diff, y + y_diff)).is_some());
-    assert!(map.get_ptr((x + y_diff, y + y_diff)).is_some());
+    let mut map = Map::new((CENTER_X - y_max - 2, CENTER_X + y_max + 2), (0, y_max + 2));
 
-    let mut ptr = map.get_ptr((x, y)).expect("invalid start pos");
-
-    if *ptr.get().expect("invalid created pointer") {
-        return false;
+    for coord in path_coords(path) {
+        map.insert(coord);
     }
 
-    for _ in 0..y_diff {
-        ptr.add_rows(1);
-
-        // The pointer can only go one row down, which means that we never point to more than
-        // row y_max as we do (y_max - y) iterations from y
-        if !*unsafe { ptr.get_unchecked() } {
-            continue;
-        }
-
-        ptr.sub_cols(1);
-
-        // The pointer never goes left / right more than it goes down, we ensured that the
-        // matrix is twice as wide as it is tall
-        if !*unsafe { ptr.get_unchecked() } {
-            continue;
-        }
-
-        ptr.add_cols(2);
-
-        // We just moved left once so moving right twice cancels out to moving right only once
-        if !*unsafe { ptr.get_unchecked() } {
-            continue;
-        }
-
-        // Cancel previous move before returning
-        ptr.sub_cols(1);
-        ptr.sub_rows(1);
-        break;
-    }
-
-    assert!(ptr.set(true));
-    true
+    let mut counter = 0;
+    let ptr = map.get_ptr(start).expect("invalid start pos");
+    walk_fall(ptr, &mut counter, has_floor);
+    counter
 }
 
 fn path_coords(paths: &[Vec<Coord>]) -> impl Iterator<Item = Coord> + '_ {
@@ -149,49 +113,9 @@ fn path_coords(paths: &[Vec<Coord>]) -> impl Iterator<Item = Coord> + '_ {
 }
 
 pub fn part1(path: &[Vec<Coord>]) -> u64 {
-    let y_max = path_coords(path).map(|(_, y)| y).max().unwrap_or(0);
-
-    let x_min = path_coords(path)
-        .map(|(x, _)| x)
-        .chain([CENTER_X])
-        .min()
-        .unwrap();
-
-    let x_max = path_coords(path)
-        .map(|(x, _)| x)
-        .chain([CENTER_X])
-        .max()
-        .unwrap();
-
-    let mut count = 0;
-    let mut map = Map::new((x_min, x_max), (0, y_max + 1));
-
-    for coord in path_coords(path) {
-        map.insert(coord);
-    }
-
-    while simulate_fall(&mut map, (CENTER_X, 0)) {
-        count += 1;
-    }
-
-    count
+    simulate_fall(path, (CENTER_X, 0), false)
 }
 
 pub fn part2(path: &[Vec<Coord>]) -> u64 {
-    let Some(y_max) = path_coords(path).map(|(_, y)| y).max() else {
-        return 0
-    };
-
-    let mut count = 0;
-    let mut map = Map::new((CENTER_X - y_max - 2, CENTER_X + y_max + 2), (0, y_max + 2));
-
-    for coord in path_coords(path) {
-        map.insert(coord);
-    }
-
-    while simulate_fall_with_floor(&mut map, (CENTER_X, 0), y_max + 2) {
-        count += 1
-    }
-
-    count
+    simulate_fall(path, (CENTER_X, 0), true)
 }

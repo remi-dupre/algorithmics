@@ -1,4 +1,4 @@
-use std::ops::{Index, IndexMut, Range};
+use std::ops::{Index, IndexMut};
 
 pub struct Matrix<T> {
     width: usize,
@@ -8,10 +8,12 @@ pub struct Matrix<T> {
 
 impl<T: Clone> Matrix<T> {
     pub fn new(width: usize, height: usize, default: T) -> Self {
+        let cells = vec![default; width * height];
+
         Self {
             width,
             height,
-            cells: vec![default; width * height],
+            cells,
         }
     }
 }
@@ -29,11 +31,9 @@ impl<T> Matrix<T> {
 
     pub fn get_ptr_mut(&mut self, pos: (usize, usize)) -> Option<MatrixPtr<T>> {
         let inner = self.get_mut(pos)? as _;
-        let range = self.cells.as_mut_ptr_range();
 
         Some(MatrixPtr {
             matrix: self,
-            ptr_range: range,
             inner,
         })
     }
@@ -77,23 +77,27 @@ impl<T> IndexMut<(usize, usize)> for Matrix<T> {
 
 pub struct MatrixPtr<'m, T> {
     matrix: &'m mut Matrix<T>,
-    ptr_range: Range<*mut T>,
     inner: *mut T,
 }
 
 impl<'m, T> MatrixPtr<'m, T> {
     pub fn as_pos(&self) -> Option<(usize, usize)> {
-        if !self.ptr_range.contains(&self.inner) {
+        if !self
+            .matrix
+            .cells
+            .as_ptr_range()
+            .contains(&(self.inner as _))
+        {
             return None;
         }
 
         // We just checked that a valid array contains this ptr
-        let idx = unsafe { self.inner.sub_ptr(self.ptr_range.start) };
+        let idx = unsafe { self.inner.sub_ptr(self.matrix.cells.as_ptr()) };
         self.matrix.index_to_coord(idx)
     }
 
     pub fn set(&mut self, val: T) -> bool {
-        if self.ptr_range.contains(&self.inner) {
+        if self.matrix.cells.as_mut_ptr_range().contains(&self.inner) {
             // We just checked that a valid array contains this ptr
             unsafe { self.inner.write(val) }
             true
@@ -103,7 +107,12 @@ impl<'m, T> MatrixPtr<'m, T> {
     }
 
     pub fn get(&self) -> Option<&T> {
-        if !self.ptr_range.contains(&self.inner) {
+        if !self
+            .matrix
+            .cells
+            .as_ptr_range()
+            .contains(&(self.inner as _))
+        {
             return None;
         }
 
@@ -111,27 +120,23 @@ impl<'m, T> MatrixPtr<'m, T> {
         unsafe { self.inner.as_ref() }
     }
 
-    /// # Safety
-    ///
-    /// Ensure that your pointer is still pointing in the matrix while adding/removing some rows or
-    /// columns.
-    pub unsafe fn get_unchecked(&self) -> &T {
-        &*self.inner
-    }
-
-    pub fn add_rows(&mut self, rows: usize) {
+    pub fn add_rows(mut self, rows: usize) -> Self {
         self.inner = self.inner.wrapping_add(rows * self.matrix.width);
+        self
     }
 
-    pub fn sub_rows(&mut self, rows: usize) {
+    pub fn sub_rows(mut self, rows: usize) -> Self {
         self.inner = self.inner.wrapping_sub(rows * self.matrix.width);
+        self
     }
 
-    pub fn add_cols(&mut self, cols: usize) {
+    pub fn add_cols(mut self, cols: usize) -> Self {
         self.inner = self.inner.wrapping_add(cols);
+        self
     }
 
-    pub fn sub_cols(&mut self, cols: usize) {
+    pub fn sub_cols(mut self, cols: usize) -> Self {
         self.inner = self.inner.wrapping_sub(cols);
+        self
     }
 }

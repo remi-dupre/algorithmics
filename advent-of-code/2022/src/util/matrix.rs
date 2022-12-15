@@ -1,3 +1,5 @@
+use anyhow::{bail, Result};
+
 use std::ops::{Index, IndexMut};
 
 pub struct Matrix<T> {
@@ -19,6 +21,37 @@ impl<T: Clone> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
+    pub fn try_from_iter(
+        width: usize,
+        height: usize,
+        iter: impl Iterator<Item = Result<T>>,
+    ) -> Result<Self> {
+        let cells: Vec<_> = iter.take(width * height).collect::<Result<_>>()?;
+
+        if cells.len() != width * height {
+            bail!("iterator too short to build matrix")
+        }
+
+        Ok(Self {
+            width,
+            height,
+            cells,
+        })
+    }
+
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = ((usize, usize), &T)> + '_ {
+        let positions = (0..self.height).flat_map(|y| (0..self.width).map(move |x| (x, y)));
+        positions.zip(&self.cells)
+    }
+
     pub fn get(&self, pos: (usize, usize)) -> Option<&T> {
         let idx = self.index_for(pos)?;
         Some(&self.cells[idx])

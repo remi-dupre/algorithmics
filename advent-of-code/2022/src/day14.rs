@@ -35,6 +35,16 @@ impl Map {
     }
 }
 
+fn path_coords(paths: &[Vec<Coord>]) -> impl Iterator<Item = Coord> + '_ {
+    paths.iter().flat_map(|segment| {
+        segment.array_windows().flat_map(|&[start, end]| {
+            let (x_min, x_max) = min_max(start.0, end.0);
+            let (y_min, y_max) = min_max(start.1, end.1);
+            (x_min..=x_max).flat_map(move |x| (y_min..=y_max).map(move |y| (x, y)))
+        })
+    })
+}
+
 pub fn parse(input: &str) -> Result<Vec<Vec<Coord>>> {
     let paths = input
         .lines()
@@ -56,27 +66,24 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Coord>>> {
     Ok(paths)
 }
 
-fn walk_fall<'m>(
+// It seems that the generic param disuades the compire to perform inlining, which made it less
+// performant than passing an actual value instead of a generic param
+#[inline(always)]
+fn walk_fall<'m, const HAS_FLOOR: bool>(
     mut ptr: MatrixPtr<'m, bool>,
     counter: &mut u64,
-    has_floor: bool,
 ) -> Option<MatrixPtr<'m, bool>> {
     match ptr.get().copied() {
         Some(false) => {}
         Some(true) => return Some(ptr),
-        None => {
-            if has_floor {
-                return Some(ptr);
-            } else {
-                return None;
-            }
-        }
-    }
+        None if HAS_FLOOR => return Some(ptr),
+        None => return None,
+    };
 
     // Try to fill bellow, exit if end is reached
-    ptr = walk_fall(ptr.add_rows(1), counter, has_floor)?;
-    ptr = walk_fall(ptr.sub_cols(1), counter, has_floor)?;
-    ptr = walk_fall(ptr.add_cols(2), counter, has_floor)?;
+    ptr = walk_fall::<HAS_FLOOR>(ptr.add_rows(1), counter)?;
+    ptr = walk_fall::<HAS_FLOOR>(ptr.sub_cols(1), counter)?;
+    ptr = walk_fall::<HAS_FLOOR>(ptr.add_cols(2), counter)?;
 
     // Reset pointer, fill cell and exit
     ptr = ptr.sub_rows(1).sub_cols(1);
@@ -85,7 +92,7 @@ fn walk_fall<'m>(
     Some(ptr)
 }
 
-fn simulate_fall(path: &[Vec<Coord>], start: Coord, has_floor: bool) -> u64 {
+fn simulate_fall<const HAS_FLOOR: bool>(path: &[Vec<Coord>], start: Coord) -> u64 {
     let Some(y_max) = path_coords(path).map(|(_, y)| y).max() else {
         return 0
     };
@@ -98,24 +105,14 @@ fn simulate_fall(path: &[Vec<Coord>], start: Coord, has_floor: bool) -> u64 {
 
     let mut counter = 0;
     let ptr = map.get_ptr(start).expect("invalid start pos");
-    walk_fall(ptr, &mut counter, has_floor);
+    walk_fall::<HAS_FLOOR>(ptr, &mut counter);
     counter
 }
 
-fn path_coords(paths: &[Vec<Coord>]) -> impl Iterator<Item = Coord> + '_ {
-    paths.iter().flat_map(|segment| {
-        segment.array_windows().flat_map(|&[start, end]| {
-            let (x_min, x_max) = min_max(start.0, end.0);
-            let (y_min, y_max) = min_max(start.1, end.1);
-            (x_min..=x_max).flat_map(move |x| (y_min..=y_max).map(move |y| (x, y)))
-        })
-    })
-}
-
 pub fn part1(path: &[Vec<Coord>]) -> u64 {
-    simulate_fall(path, (CENTER_X, 0), false)
+    simulate_fall::<false>(path, (CENTER_X, 0))
 }
 
 pub fn part2(path: &[Vec<Coord>]) -> u64 {
-    simulate_fall(path, (CENTER_X, 0), true)
+    simulate_fall::<true>(path, (CENTER_X, 0))
 }

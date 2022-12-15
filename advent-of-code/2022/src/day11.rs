@@ -166,7 +166,19 @@ pub fn parse(input: &str) -> Result<Vec<Monkey>> {
     Ok(res)
 }
 
-fn simulate(monkeys: &[Monkey], steps: u64, regulate_stress: impl Fn(Worry) -> Worry) -> usize {
+/// Max worry when stress is regulated by performing modulus operations.
+/// It is computed at compile time to allow compiler optimizations.
+const MAX_WORRY: Worry = 2 * 3 * 5 * 7 * 9 * 11 * 13 * 17 * 19;
+
+fn regulate_stress(old: Worry, reg_by_mod: bool) -> Worry {
+    if reg_by_mod {
+        old % MAX_WORRY
+    } else {
+        old / 3
+    }
+}
+
+fn simulate<const REG_BY_MOD: bool>(monkeys: &[Monkey], steps: u64) -> usize {
     struct Item {
         monkey_id: MonkeyId,
         worry: Worry,
@@ -191,7 +203,7 @@ fn simulate(monkeys: &[Monkey], steps: u64, regulate_stress: impl Fn(Worry) -> W
                 .iter_mut()
                 .filter(|item| item.monkey_id == monkey_id)
                 .map(|item| {
-                    item.worry = regulate_stress(monkey.operation.eval(item.worry));
+                    item.worry = regulate_stress(monkey.operation.eval(item.worry), REG_BY_MOD);
                     item.monkey_id = monkey.test.throws_to(item.worry);
                 })
                 .count();
@@ -203,17 +215,14 @@ fn simulate(monkeys: &[Monkey], steps: u64, regulate_stress: impl Fn(Worry) -> W
 }
 
 pub fn part1(monkeys: &[Monkey]) -> usize {
-    simulate(monkeys, 20, |stress| stress / 3)
+    simulate::<false>(monkeys, 20)
 }
 
 pub fn part2(monkeys: &[Monkey]) -> usize {
-    /// Computed at compile time to allow compiler optimizations
-    const MAX_WORRY: Worry = 2 * 3 * 5 * 7 * 9 * 11 * 13 * 17 * 19;
-
     // Ensure all divisibility rules will apply after stress regulation
     for monkey in monkeys {
         assert!(MAX_WORRY % monkey.test.divisible_by == 0);
     }
 
-    simulate(monkeys, 10_000, |stress| stress % MAX_WORRY)
+    simulate::<true>(monkeys, 10_000)
 }

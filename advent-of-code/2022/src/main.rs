@@ -20,6 +20,7 @@ mod day12;
 mod day13;
 mod day14;
 mod day15;
+mod day16;
 
 aoc_main::main! {
     year 2022;
@@ -38,4 +39,5 @@ aoc_main::main! {
     day13: parse? => part1, part2;
     day14: parse? => part1, part2;
     day15: parse? => part1, part2?;
+    day16: parse? => part1;
 }

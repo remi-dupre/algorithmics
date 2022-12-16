@@ -2,6 +2,7 @@ use anyhow::{bail, Result};
 
 use std::ops::{Index, IndexMut};
 
+#[derive(Debug)]
 pub struct Matrix<T> {
     width: usize,
     height: usize,
@@ -60,6 +61,14 @@ impl<T> Matrix<T> {
     pub fn get_mut(&mut self, pos: (usize, usize)) -> Option<&mut T> {
         let idx = self.index_for(pos)?;
         Some(&mut self.cells[idx])
+    }
+
+    pub fn get_line(&self, line: usize) -> Option<&[T]> {
+        if line >= self.height {
+            return None;
+        }
+
+        Some(&self.cells[(line * self.width)..((line + 1) * self.width)])
     }
 
     pub fn get_ptr_mut(&mut self, pos: (usize, usize)) -> Option<MatrixPtr<T>> {

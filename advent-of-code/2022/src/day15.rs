@@ -65,14 +65,7 @@ impl Sensor {
             return None;
         }
 
-        let (x, y) = {
-            if self.pos < other.pos {
-                (self.pos.0 + self.radius() + 1, self.pos.1)
-            } else {
-                (other.pos.0 + self.radius() + 1, other.pos.1)
-            }
-        };
-
+        let (x, y) = (other.pos.0 + other.radius() + 1, other.pos.1);
         Some((x - y, x + y))
     }
 }

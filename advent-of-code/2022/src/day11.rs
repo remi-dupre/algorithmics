@@ -1,4 +1,5 @@
 use anyhow::{bail, Context, Result};
+use rayon::prelude::*;
 
 pub type Worry = u64;
 pub type MonkeyId = usize;

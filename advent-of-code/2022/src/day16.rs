@@ -1,15 +1,22 @@
+use std::cell::RefCell;
+
 use anyhow::{Context, Result};
 use fxhash::{FxHashMap, FxHashSet};
+use rayon::prelude::*;
 
 use crate::util::matrix::Matrix;
 
 type FlowRate = u32;
 
-#[derive(Debug)]
 pub struct Valve<'i> {
     name: &'i str,
     flow: FlowRate,
     tunnels: Vec<&'i str>,
+}
+
+pub struct Input<'i> {
+    valves: Vec<Valve<'i>>,
+    precomputed: RefCell<[Vec<u32>; 2]>,
 }
 
 impl Valve<'_> {
@@ -68,8 +75,8 @@ fn build_subgraph(valves: &[Valve]) -> Matrix<usize> {
 }
 
 // Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
-pub fn parse(input: &str) -> Result<Vec<Valve>> {
-    input
+pub fn parse(input: &str) -> Result<Input> {
+    let mut valves: Vec<_> = input
         .lines()
         .map(|line| {
             let line = line
@@ -95,88 +102,197 @@ pub fn parse(input: &str) -> Result<Vec<Valve>> {
 
             Ok(valve)
         })
-        .collect()
-}
-
-fn has_bit(bitset: u16, bit: usize) -> bool {
-    (bitset.to_le() >> bit) & 1 != 0
-}
-
-fn set_bit(bitset: u16, bit: usize) -> u16 {
-    u16::from_le(bitset.to_le() | (1 << bit))
-}
-
-const TIME_STEPS: usize = 29;
-
-pub fn part1(valves: &[Valve<'_>]) -> u32 {
-    let dist = build_subgraph(valves);
-    let valves: Vec<_> = valves.iter().filter(|valve| valve.is_relevant()).collect();
+        .collect::<Result<_>>()?;
 
     let start_idx = valves
         .iter()
         .enumerate()
         .find(|(_, valve)| valve.name == "AA")
-        .expect("missing starting valve")
+        .context("missing valve with name 'AA'")?
         .0;
 
-    let n = dist.width();
+    let last_idx = valves.len() - 1;
+    valves.swap(start_idx, last_idx);
 
-    assert!(n <= u16::BITS as _);
-    let bitset_max_val = 2u16.wrapping_pow(n as _).wrapping_sub(1);
+    Ok(Input {
+        valves,
+        precomputed: Default::default(),
+    })
+}
 
-    let col = |pos: usize, bitset: u16| usize::from(bitset) * n + pos;
-    let mut matrix = Matrix::new((usize::from(bitset_max_val) + 1) * n + n, TIME_STEPS + 1, 0);
-    matrix[(col(start_idx, 0), 0)] = 1;
+fn has_bit(bitset: u16, bit: u8) -> bool {
+    (bitset.to_le() >> bit) & 1 != 0
+}
 
-    for t in 0..TIME_STEPS {
-        for bitset in 0..=bitset_max_val {
-            for from in 0..n {
-                // Skip if we can't reach this pos
-                if matrix[(col(from, bitset), t)] == 0 {
-                    continue;
+fn set_bit(bitset: u16, bit: u8) -> u16 {
+    u16::from_le(bitset.to_le() | (1 << bit))
+}
+
+fn solve<const RES_SIZE: usize>(
+    valves: &[Valve],
+    time_steps_in_res: [usize; RES_SIZE],
+) -> [Vec<u32>; RES_SIZE] {
+    let max_steps = time_steps_in_res.into_iter().max().unwrap_or(0);
+
+    // Build a subgraph of relevant nodes
+    let dist = build_subgraph(valves);
+    let valves: Vec<_> = valves.iter().filter(|valve| valve.is_relevant()).collect();
+
+    // State should fit in an u16
+    let n: u8 = valves.len().try_into().expect("too many relevant valves");
+    assert!(u32::from(n) <= u16::BITS, "too many relevant valves");
+
+    // The starting node should be in last position. We can also assume that it has no flow which
+    // will reduce the number of states to consider.
+    assert_eq!(valves[usize::from(n - 1)].name, "AA");
+    assert_eq!(valves[usize::from(n - 1)].flow, 0);
+
+    // Keep track of the best score that can be obtained, at a given time, given position and with
+    // some state of the valves (represented by a bitset)
+    let mut best_at = vec![FxHashMap::default(); max_steps + 1];
+    best_at[0].insert((n - 1, 0), 0);
+
+    // Compute the best value for any given configuration of opened valves
+    let mut res = std::array::from_fn(|_| vec![0; 2usize.pow((n - 1).into())]);
+
+    // As there is no reason to move from a position to another without immediately opening a
+    // valve, thus we can implement only "move + open" steps. This little trick will allow to
+    // eliminate a lot of states that we would have to consider otherwise.
+    for t in 0..max_steps {
+        std::mem::take(&mut best_at[t]).into_iter().for_each(
+            |((from, opened_valves), from_total)| {
+                for to in 0..(n - 1) {
+                    if has_bit(opened_valves, to) {
+                        continue;
+                    }
+
+                    let dist = dist[(from.into(), to.into())];
+                    let new_t = t + dist + 1;
+
+                    let Some(to_time_state) = best_at.get_mut(new_t) else {
+                        continue;
+                    };
+
+                    let valve = valves[usize::from(to)];
+                    let new_opened_valves = set_bit(opened_valves, to);
+                    let new_total = from_total + ((max_steps - t - dist) as u32) * valve.flow;
+
+                    to_time_state
+                        .entry((to, new_opened_valves))
+                        .and_modify(|val| *val = std::cmp::max(*val, new_total))
+                        .or_insert(new_total);
+
+                    for (res_steps, res) in time_steps_in_res.into_iter().zip(&mut res) {
+                        if new_t <= res_steps {
+                            let idx = usize::from(new_opened_valves);
+
+                            res[idx] = std::cmp::max(res[idx], new_total);
+                        }
+                    }
                 }
+            },
+        )
+    }
 
-                // // Open current valve
-                // if !has_bit(bitset, from) {
-                //     let next_bitset = set_bit(bitset, from);
-                //
-                //     matrix[(col(from, next_bitset), t + 1)] = std::cmp::max(
-                //         matrix[(col(from, next_bitset), t + 1)],
-                //         matrix[(col(from, bitset), t)]
-                //             + ((TIME_STEPS - t) as u32) * valves[from].flow,
-                //     );
-                // }
+    // Remove extra value for early results
+    for (res_steps, res) in time_steps_in_res.into_iter().zip(&mut res) {
+        if res_steps == max_steps {
+            continue;
+        }
 
-                // Jump to neighbours and swap valve
-                for to in 0..n {
-                    if has_bit(bitset, to) {
-                        continue;
-                    }
+        for (layout, val) in res.iter_mut().enumerate() {
+            if *val == 0 {
+                continue;
+            }
 
-                    let dist = dist[(from, to)];
+            let layout: u16 = layout as u16;
 
-                    if t + dist + 1 > TIME_STEPS {
-                        continue;
-                    }
-
-                    let next_bitset = set_bit(bitset, to);
-
-                    matrix[(col(to, next_bitset), t + dist + 1)] = std::cmp::max(
-                        matrix[(col(to, next_bitset), t + dist + 1)],
-                        matrix[(col(from, bitset), t)]
-                            + ((TIME_STEPS - t - dist) as u32) * valves[to].flow,
-                    );
+            for idx in 0..(n - 1) {
+                if has_bit(layout, idx) {
+                    *val -= (max_steps - res_steps) as u32 * valves[usize::from(idx)].flow;
                 }
             }
         }
     }
 
-    eprintln!("matrix size: {}", matrix.width() * matrix.height());
+    res
+}
 
-    eprintln!(
-        "set size: {}",
-        matrix.iter().filter(|(_, x)| **x != 0).count()
-    );
+pub fn precomputing(input: &Input) -> &'static str {
+    let value = solve(&input.valves, [29, 25]);
+    *input.precomputed.borrow_mut() = value;
+    "scores for [29, 25] steps"
+}
 
-    matrix.iter().map(|(_, x)| *x).max().unwrap() - 1
+pub fn part1(input: &Input) -> u32 {
+    let precomputed = input.precomputed.borrow();
+    *precomputed[0].iter().max().unwrap_or(&0)
+}
+
+pub fn part2(input: &Input) -> u32 {
+    // Retrieve precomputed data
+    let precomputed = input.precomputed.borrow();
+    let score_for_layout = &precomputed[1];
+
+    // Find size of the output (number of bits of state and mask for layouts)
+    let bound: u16 = score_for_layout
+        .len()
+        .try_into()
+        .expect("must fit in 16 bits");
+
+    let bit_bound =
+        u8::try_from(score_for_layout.len().trailing_zeros()).expect("must fit in 16 bits");
+
+    let bit_mask = u16::MAX >> (16 - bit_bound);
+
+    // Use DP to compute best complement value for any layouts using best value for layouts with
+    // one less valve openened
+    let layouts_per_count_zeroes = (0..bound)
+        .into_par_iter()
+        .fold_with(Default::default(), |mut acc: [Vec<u16>; 17], layout| {
+            let idx: usize = layout.count_zeros() as _;
+            acc[idx].push(layout);
+            acc
+        })
+        .reduce(Default::default, |mut acc, other| {
+            for (from_acc, from_other) in acc.iter_mut().zip(other) {
+                from_acc.extend_from_slice(&from_other);
+            }
+
+            acc
+        });
+
+    let mut comp_for_layout = vec![0; score_for_layout.len()];
+
+    for layouts in layouts_per_count_zeroes.into_iter() {
+        let todo: Vec<_> = layouts
+            .into_par_iter()
+            .map(|layout| {
+                let from_smaller = (0..bit_bound)
+                    .filter(|&bit| !has_bit(layout, bit))
+                    .map(|bit| comp_for_layout[usize::from(set_bit(layout, bit))])
+                    .max()
+                    .unwrap_or(0);
+
+                (
+                    layout,
+                    std::cmp::max(
+                        from_smaller,
+                        score_for_layout[usize::from(bit_mask & !layout)],
+                    ),
+                )
+            })
+            .collect();
+
+        for (layout, val) in todo {
+            comp_for_layout[usize::from(layout)] = val;
+        }
+    }
+
+    score_for_layout
+        .iter()
+        .zip(comp_for_layout)
+        .map(|(val_1, val_2)| *val_1 + val_2)
+        .max()
+        .unwrap_or(0)
 }

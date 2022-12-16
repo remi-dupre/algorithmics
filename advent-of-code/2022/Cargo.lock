@@ -42,6 +42,7 @@ dependencies = [
  "anyhow",
  "aoc-main",
  "fxhash",
+ "rayon",
 ]
 
 [[package]]

@@ -1,7 +1,7 @@
 use std::iter;
 
 use anyhow::{bail, Context, Result};
-use fxhash::FxHashMap;
+use rustc_hash::FxHashMap;
 
 type Size = u64;
 

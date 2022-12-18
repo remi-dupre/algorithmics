@@ -1,7 +1,7 @@
 use std::iter;
 
 use anyhow::{bail, Context, Result};
-use fxhash::FxHashSet;
+use rustc_hash::FxHashSet;
 
 use crate::util::Direction;
 

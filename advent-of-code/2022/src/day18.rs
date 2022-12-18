@@ -53,7 +53,7 @@ fn neighbours([x, y, z]: Coord) -> impl Iterator<Item = Coord> {
         [0, 0, -1],
     ]
     .into_iter()
-    .map(move |[dx, dy, dz]| [x - dx, y - dy, z - dz])
+    .map(move |[dx, dy, dz]| [x + dx, y + dy, z + dz])
 }
 
 fn bounds(coords: &[Coord]) -> [Range<i8>; 3] {
@@ -88,32 +88,6 @@ fn build_map(cells: &[Coord]) -> Map {
     }
 
     map
-}
-
-fn build_exterior(map: &Map) -> Map {
-    let start = map.bounds.clone().map(|rng| rng.start);
-
-    let in_bounds = move |coord: [i8; 3]| -> bool {
-        map.bounds
-            .iter()
-            .zip(coord)
-            .all(|(rng, coord)| rng.contains(&coord))
-    };
-
-    let mut todo = vec![start];
-    let mut exterior = Map::new(map.bounds.clone());
-    exterior.insert(start);
-
-    while let Some(curr) = todo.pop() {
-        for neighbour in neighbours(curr) {
-            if in_bounds(neighbour) && !map.contains(neighbour) && !exterior.contains(neighbour) {
-                todo.push(neighbour);
-                exterior.insert(neighbour);
-            }
-        }
-    }
-
-    exterior
 }
 
 pub fn parse(input: &str) -> Result<Vec<Coord>> {
@@ -157,11 +131,33 @@ pub fn part1(coords: &[Coord]) -> usize {
 
 pub fn part2(coords: &[Coord]) -> usize {
     let map = build_map(coords);
-    let exterior = build_exterior(&map);
 
-    coords
-        .iter()
-        .flat_map(|coord| neighbours(*coord))
-        .filter(|&neighbour| exterior.contains(neighbour))
-        .count()
+    let in_bounds = |coord: [i8; 3]| -> bool {
+        map.bounds
+            .iter()
+            .zip(coord)
+            .all(|(rng, coord)| rng.contains(&coord))
+    };
+
+    // Start a DFS from exterior of the map and count number of edges in the border while doing so
+    let start = map.bounds.clone().map(|rng| rng.start);
+    let mut count_ext = 0;
+    let mut todo = vec![start];
+    let mut exterior = Map::new(map.bounds.clone());
+    exterior.insert(start);
+
+    while let Some(curr) = todo.pop() {
+        for neighbour in neighbours(curr) {
+            if in_bounds(neighbour) {
+                if map.contains(neighbour) {
+                    count_ext += 1;
+                } else if !exterior.contains(neighbour) {
+                    todo.push(neighbour);
+                    exterior.insert(neighbour);
+                }
+            }
+        }
+    }
+
+    count_ext
 }

@@ -1,5 +1,5 @@
 use anyhow::{bail, Result};
-use fxhash::FxHashMap;
+use rustc_hash::FxHashMap;
 
 const PIECES_HEIGHT: usize = 4;
 

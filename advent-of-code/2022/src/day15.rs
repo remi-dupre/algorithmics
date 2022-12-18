@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 use anyhow::{Context, Result};
-use fxhash::FxHashSet;
+use rustc_hash::FxHashSet;
 
 type Coord = (i32, i32);
 

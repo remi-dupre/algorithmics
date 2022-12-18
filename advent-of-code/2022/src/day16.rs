@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 
 use anyhow::{Context, Result};
-use fxhash::{FxHashMap, FxHashSet};
 use rayon::prelude::*;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::util::matrix::Matrix;
 

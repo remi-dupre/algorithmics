@@ -1,9 +1,9 @@
-use std::collections::{hash_map, HashMap};
+use std::collections::hash_map::Entry;
 
-use fxhash::FxBuildHasher;
+use rustc_hash::FxHashMap;
 
 pub fn find_marker_hashmap(marker_size: usize, signal: &[u8]) -> Option<usize> {
-    let mut count_for_win: HashMap<u8, usize, FxBuildHasher> = Default::default();
+    let mut count_for_win: FxHashMap<u8, usize> = FxHashMap::default();
 
     for b in &signal[..marker_size] {
         *count_for_win.entry(*b).or_default() += 1;
@@ -19,8 +19,8 @@ pub fn find_marker_hashmap(marker_size: usize, signal: &[u8]) -> Option<usize> {
         *count_for_win.entry(added).or_default() += 1;
 
         match count_for_win.entry(removed) {
-            hash_map::Entry::Occupied(mut e) if *e.get() > 1 => *e.get_mut() -= 1,
-            hash_map::Entry::Occupied(e) if *e.get() == 1 => {
+            Entry::Occupied(mut e) if *e.get() > 1 => *e.get_mut() -= 1,
+            Entry::Occupied(e) if *e.get() == 1 => {
                 count_for_win.remove(&removed);
             }
             _ => unreachable!(),

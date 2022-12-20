@@ -9,10 +9,4 @@ rayon = "1"
 rustc-hash = "1"
 
 aoc-main = { path = "/home/remi/code/perso/aoc", features = ["bench"] }
-# aoc-main = { git = "https://github.com/remi-dupre/aoc.git", branch = "main", features = ["bench"] }
-# aoc-main = { git = "https://github.com/Pyxels/aoc-lib.git", branch = "feat/colored_times", features = ["bench"] }
-
-[profile.release]
-debug = true
-# lto = "fat"
-# codegen-units = 1
+# aoc-main = { git = "https://github.com/remi-dupre/aoc.git", branch = "less-macros", features = ["bench"] }
